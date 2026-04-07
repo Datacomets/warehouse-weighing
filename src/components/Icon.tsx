@@ -1,0 +1,20 @@
+import { clsx } from "clsx";
+
+export function Icon({
+  name,
+  className,
+  filled,
+}: {
+  name: string;
+  className?: string;
+  filled?: boolean;
+}) {
+  return (
+    <span
+      className={clsx("material-symbols-outlined select-none", className)}
+      style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}
+    >
+      {name}
+    </span>
+  );
+}
