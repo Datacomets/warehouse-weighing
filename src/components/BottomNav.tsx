@@ -30,6 +30,7 @@ export function BottomNav({ role }: { role: UserRole }) {
   } else {
     items = [
       { href: "/users", icon: "group", label: "ผู้ใช้" },
+      { href: "/admin/items", icon: "inventory_2", label: "Items" },
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
