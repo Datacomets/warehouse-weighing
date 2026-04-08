@@ -45,7 +45,7 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
             <Field label="Item Code" value={doc.item_code} />
             <Field label="Description" value={doc.description} className="col-span-2" />
             <Field label="LOT" value={doc.lot} />
-            <Field label="Supplier" value={doc.supplier} />
+            <Field label="Item Supplier" value={doc.supplier} />
             <Field label="Delivery Date" value={fmtDate(doc.delivery_date)} />
             <Field label="Notification ID" value={doc.sap_notification_id} />
             <Field label="Qty / Carton" value={doc.qty_per_carton} />

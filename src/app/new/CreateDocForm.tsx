@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { MOCK_ERP_ITEMS, type ErpItem } from "@/lib/mock-erp";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 
@@ -11,7 +10,7 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [erpKey, setErpKey] = useState<string>("");
+  const [lookupMsg, setLookupMsg] = useState<string | null>(null);
   const [form, setForm] = useState({
     lot: "",
     po_number: "",
@@ -23,16 +22,32 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
     sap_notification_id: "",
   });
 
-  function applyErp(item: ErpItem) {
-    setForm((f) => ({
-      ...f,
-      lot: item.lot,
-      po_number: item.po_number,
-      item_code: item.item_code,
-      description: item.description,
-      supplier: item.supplier,
-      delivery_date: item.delivery_date,
-    }));
+  async function lookupItemCode(code: string) {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setLookupMsg(null);
+      return;
+    }
+    const { data, error } = await supabase
+      .from("item_master")
+      .select("description, product_category, obsolete")
+      .eq("item_code", trimmed)
+      .maybeSingle();
+    if (error) {
+      setLookupMsg("ค้นหา Item Code ไม่สำเร็จ");
+      return;
+    }
+    if (data?.description) {
+      setForm((f) => ({ ...f, description: data.description }));
+      const cat = data.product_category ? ` · ${data.product_category}` : "";
+      if (data.obsolete) {
+        setLookupMsg(`⚠ Item นี้ถูกยกเลิก (Obsolete)${cat}`);
+      } else {
+        setLookupMsg(`พบใน Item Master — กรอก Description ให้แล้ว${cat}`);
+      }
+    } else {
+      setLookupMsg("ไม่พบ Item Code นี้ใน Master — กรุณากรอก Description เอง");
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -75,26 +90,6 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
         </p>
       </div>
 
-      <SectionHeader icon="cloud_download" title="ดึงข้อมูลจาก ERP (Mock)" accent />
-      <Field label="เลือกรายการจาก Packing List">
-        <select
-          value={erpKey}
-          onChange={(e) => {
-            setErpKey(e.target.value);
-            const it = MOCK_ERP_ITEMS.find((x) => x.po_number === e.target.value);
-            if (it) applyErp(it);
-          }}
-          className="input-base"
-        >
-          <option value="">-- เลือกหรือกรอกเอง --</option>
-          {MOCK_ERP_ITEMS.map((it) => (
-            <option key={it.po_number} value={it.po_number}>
-              {it.po_number} · {it.item_code} · {it.description}
-            </option>
-          ))}
-        </select>
-      </Field>
-
       <SectionHeader icon="description" title="ข้อมูลพื้นฐาน" accent />
       <div className="grid grid-cols-2 gap-3">
         <Field label="LOT" required>
@@ -117,9 +112,17 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
           <input
             required
             value={form.item_code}
-            onChange={(e) => setForm({ ...form, item_code: e.target.value })}
+            onChange={(e) => {
+              setForm({ ...form, item_code: e.target.value });
+              setLookupMsg(null);
+            }}
+            onBlur={(e) => lookupItemCode(e.target.value)}
             className="input-base"
+            placeholder="กรอกแล้ว tab ออก เพื่อดึง Description"
           />
+          {lookupMsg && (
+            <p className="text-[11px] text-outline mt-1">{lookupMsg}</p>
+          )}
         </Field>
         <Field label="Description" required className="col-span-2">
           <input
@@ -129,11 +132,12 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
             className="input-base"
           />
         </Field>
-        <Field label="Supplier" className="col-span-2">
+        <Field label="Item Supplier" className="col-span-2">
           <input
             value={form.supplier}
             onChange={(e) => setForm({ ...form, supplier: e.target.value })}
             className="input-base"
+            placeholder="กรอกชื่อ supplier ของ item นี้"
           />
         </Field>
         <Field label="Delivery Date" className="col-span-2">

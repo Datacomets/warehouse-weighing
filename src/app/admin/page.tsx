@@ -42,6 +42,15 @@ export default async function AdminPage() {
           </div>
         </div>
 
+        <Link href="/admin/items" className="card flex items-center gap-3 hover:bg-surface-container-high">
+          <Icon name="inventory_2" className="text-primary text-2xl" />
+          <div className="flex-1">
+            <div className="text-sm font-bold">Item Master</div>
+            <div className="text-[11px] text-outline">นำเข้า / จัดการ Material จาก SAP</div>
+          </div>
+          <Icon name="chevron_right" className="text-outline" />
+        </Link>
+
         <div className="flex flex-col gap-4">
           {(pending || []).length === 0 && (
             <div className="card text-center text-outline py-12">

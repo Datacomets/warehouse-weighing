@@ -75,7 +75,7 @@ export function HeaderForm({ doc }: { doc: any }) {
           <div><b>LOT:</b> {doc.lot}</div>
           <div><b>PO:</b> {doc.po_number}</div>
           <div className="col-span-2"><b>Item:</b> {doc.item_code} — {doc.description}</div>
-          <div className="col-span-2"><b>Supplier:</b> {doc.supplier || "-"}</div>
+          <div className="col-span-2"><b>Item Supplier:</b> {doc.supplier || "-"}</div>
         </div>
       </div>
 
