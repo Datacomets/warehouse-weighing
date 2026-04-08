@@ -28,9 +28,12 @@ export function createClient() {
 
 export async function getCurrentUserAndProfile() {
   const supabase = createClient();
+  // Middleware already validated the session via getUser() on every request,
+  // so here we trust getSession() (cookie-only, no network round-trip).
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
   if (!user) return { user: null, profile: null };
   const { data: profile } = await supabase
     .from("profiles")

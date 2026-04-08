@@ -3,13 +3,17 @@ import dynamic from "next/dynamic";
 import { Icon } from "@/components/Icon";
 import { stats, fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
 
-// Dynamic import — @react-pdf/renderer is client-only
-const PDFDownloadLink = dynamic(
-  () => import("@react-pdf/renderer").then((m) => m.PDFDownloadLink),
-  { ssr: false }
-);
-
-import { WeightSheetPdf, CountSheetPdf } from "./pdfDocs";
+// Dynamic import — @react-pdf/renderer is heavy and client-only.
+// Importing the whole button wrapper (which pulls in pdfDocs + react-pdf)
+// only when this component renders avoids bundling it into shared chunks.
+const PdfDownloadButtons = dynamic(() => import("./PdfDownloadButtons"), {
+  ssr: false,
+  loading: () => (
+    <button className="btn-primary" disabled>
+      <Icon name="download" /> กำลังโหลดตัวสร้าง PDF...
+    </button>
+  ),
+});
 
 export function PdfClient({
   doc,
@@ -87,33 +91,13 @@ export function PdfClient({
       </div>
 
       <div className="flex flex-wrap gap-2 sticky bottom-4 bg-background py-2 no-print justify-center">
-        <PDFDownloadLink
-          document={
-            <WeightSheetPdf doc={doc} perPcs={perPcs} perInner={perInner} perCarton={perCarton} />
-          }
-          fileName={`${doc.wh_number}-weight.pdf`}
-          className="btn-primary"
-        >
-          {({ loading }) => (
-            <>
-              <Icon name="download" />
-              {loading ? "กำลังสร้าง..." : "Download ใบชั่งน้ำหนัก (PDF)"}
-            </>
-          )}
-        </PDFDownloadLink>
-
-        <PDFDownloadLink
-          document={<CountSheetPdf doc={doc} grid={grid} />}
-          fileName={`${doc.wh_number}-count.pdf`}
-          className="btn-secondary"
-        >
-          {({ loading }) => (
-            <>
-              <Icon name="download" />
-              {loading ? "กำลังสร้าง..." : "Download ใบตรวจนับ (PDF)"}
-            </>
-          )}
-        </PDFDownloadLink>
+        <PdfDownloadButtons
+          doc={doc}
+          grid={grid}
+          perPcs={perPcs}
+          perInner={perInner}
+          perCarton={perCarton}
+        />
 
         <button onClick={() => window.print()} className="btn-secondary">
           <Icon name="print" /> Print
