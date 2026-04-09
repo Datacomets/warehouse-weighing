@@ -71,21 +71,12 @@ export function CountGrid({
     <div className="flex flex-col gap-4">
       <div className="card overflow-x-auto">
         <table className="text-xs border-collapse">
-          <thead>
-            <tr>
-              <th className="w-8 text-outline">#</th>
-              {Array.from({ length: COLS }, (_, c) => (
-                <th key={c} className="text-outline px-1 py-1 font-semibold">
-                  {c + 1}
-                </th>
-              ))}
-            </tr>
-          </thead>
           <tbody>
             {Array.from({ length: rows }, (_, r) => (
               <tr key={r}>
-                <td className="text-outline pr-1">{r + 1}</td>
+                <td className="text-outline pr-1 text-[10px] font-bold">{r * COLS + 1}-{(r + 1) * COLS}</td>
                 {Array.from({ length: COLS }, (_, c) => {
+                  const cartonNo = r * COLS + c + 1;
                   const k = `${r}:${c}`;
                   return (
                     <td key={c} className="p-0.5">
@@ -110,6 +101,7 @@ export function CountGrid({
                             : "border border-outline-variant/40 bg-surface-container-low focus:ring-primary"
                         )}
                         title={cells[k] && isOutlier(Number(cells[k])) ? "ค่าผิดปกติ" : undefined}
+                        placeholder={String(cartonNo)}
                       />
                     </td>
                   );
