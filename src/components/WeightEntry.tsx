@@ -7,41 +7,65 @@ import { StatsCard } from "./StatsCard";
 import { Icon } from "./Icon";
 import { clsx } from "clsx";
 
+type WeightUnit = "kg" | "g" | "pcs";
+
+const UNITS: { value: WeightUnit; label: string }[] = [
+  { value: "kg", label: "Kg" },
+  { value: "g", label: "g" },
+  { value: "pcs", label: "ชิ้น" },
+];
+
 interface Props {
   documentId: string;
+  docId: string;
   kind: WeightKind;
   initial: WeightMeasurement[];
   readOnly?: boolean;
-  showPer100Toggle?: boolean;       // per_pcs only
-  showQtyPerInner?: boolean;        // per_inner only
-  expectedCount?: number | null;    // per_carton only — actual_count
+  showPer100Toggle?: boolean;
+  showQtyPerInner?: boolean;
+  expectedCount?: number | null;
+  initialUnit?: WeightUnit;
 }
 
 export function WeightEntry({
   documentId,
+  docId,
   kind,
   initial,
   readOnly,
   showPer100Toggle,
   showQtyPerInner,
   expectedCount,
+  initialUnit = "kg",
 }: Props) {
   const supabase = createClient();
   const [items, setItems] = useState<WeightMeasurement[]>(initial);
   const [per100, setPer100] = useState<boolean>(initial[0]?.per_100 || false);
   const [qtyPerInner, setQtyPerInner] = useState<number | "">(initial[0]?.qty_per_inner || "");
   const [draft, setDraft] = useState<string>("");
+  const [unit, setUnit] = useState<WeightUnit>(initialUnit);
   const [, startTransition] = useTransition();
 
   const values = items.map((i) => Number(i.value));
   const s = stats(values);
 
-  // Highlight outliers: values significantly away from the average
+  const unitLabel = UNITS.find((u) => u.value === unit)?.label || "kg";
+
   function isOutlier(v: number) {
     if (s.count < 3) return false;
     const range = s.max - s.min;
     if (range === 0) return false;
     return Math.abs(v - s.avg) > range * 0.45;
+  }
+
+  function changeUnit(newUnit: WeightUnit) {
+    setUnit(newUnit);
+    startTransition(async () => {
+      await supabase
+        .from("gr_documents")
+        .update({ weight_unit: newUnit })
+        .eq("id", docId);
+    });
   }
 
   async function addValue() {
@@ -74,7 +98,6 @@ export function WeightEntry({
     if (!error) setItems(items.filter((i) => i.id !== id));
   }
 
-  // Update qty_per_inner / per_100 across rows when toggled
   useEffect(() => {
     if (!showPer100Toggle || items.length === 0) return;
     startTransition(async () => {
@@ -102,9 +125,30 @@ export function WeightEntry({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* เลือกหน่วยวัด */}
+      <div className="card">
+        <span className="section-title">หน่วยวัด</span>
+        <div className="flex gap-2 mt-2">
+          {UNITS.map((u) => (
+            <button
+              key={u.value}
+              type="button"
+              disabled={readOnly}
+              onClick={() => changeUnit(u.value)}
+              className={clsx(
+                "flex-1 h-11 text-sm font-bold rounded-xl transition-colors",
+                unit === u.value ? "btn-primary" : "btn-secondary"
+              )}
+            >
+              {u.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {showPer100Toggle && (
         <div className="card">
-          <span className="section-title">หน่วยที่ชั่ง</span>
+          <span className="section-title">จำนวนที่ชั่ง</span>
           <div className="flex gap-2 mt-2">
             <button
               type="button"
@@ -143,7 +187,7 @@ export function WeightEntry({
 
       <div className="card">
         <div className="flex items-center justify-between mb-3">
-          <span className="section-title">บันทึกค่าที่ชั่ง</span>
+          <span className="section-title">บันทึกค่าที่ชั่ง ({unitLabel})</span>
           {expectedCount && (
             <span className="text-[11px] font-bold text-on-tertiary-container">
               ชั่งแล้ว {items.length} / {expectedCount} ลัง
@@ -167,7 +211,7 @@ export function WeightEntry({
               >
                 <span className="w-8 text-xs font-bold text-outline">#{i + 1}</span>
                 <span className="flex-1 font-headline font-bold text-primary">
-                  {fmt(v)} <span className="text-xs text-outline font-normal">kg</span>
+                  {fmt(v)} <span className="text-xs text-outline font-normal">{unitLabel}</span>
                 </span>
                 {out && (
                   <span className="text-error" title="ค่าผิดปกติ">
@@ -196,7 +240,7 @@ export function WeightEntry({
             <input
               type="number"
               inputMode="decimal"
-              step="0.001"
+              step={unit === "pcs" ? "1" : "0.001"}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -206,7 +250,7 @@ export function WeightEntry({
                 }
               }}
               className="input-base flex-1"
-              placeholder="0.000 kg"
+              placeholder={unit === "pcs" ? "จำนวนชิ้น" : `0.000 ${unitLabel}`}
             />
             <button type="button" onClick={addValue} className="btn-primary px-4">
               <Icon name="add" />
@@ -216,13 +260,13 @@ export function WeightEntry({
         )}
       </div>
 
-      <StatsCard avg={s.avg} min={s.min} max={s.max} />
+      <StatsCard avg={s.avg} min={s.min} max={s.max} unit={unitLabel} />
 
       {showPer100Toggle && per100 && s.count > 0 && (
         <div className="card border-l-4 border-tertiary-fixed-dim">
           <span className="section-title">น้ำหนักต่อ 1 ชิ้น (คำนวณ)</span>
           <p className="text-xl font-headline font-bold text-primary mt-1">
-            {fmt(s.avg / 100, 5)} <span className="text-xs text-outline font-normal">kg</span>
+            {fmt(s.avg / 100, 5)} <span className="text-xs text-outline font-normal">{unitLabel}</span>
           </p>
         </div>
       )}

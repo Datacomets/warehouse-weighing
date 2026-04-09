@@ -9,7 +9,7 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
   const supabase = createClient();
   const { data: doc } = await supabase
     .from("gr_documents")
-    .select("id,status")
+    .select("id,status,weight_unit")
     .eq("id", params.id)
     .single();
   const { data: items } = await supabase
@@ -31,10 +31,12 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
       <SectionHeader icon="inventory" title="ขั้นตอนที่ 3 — ชั่ง Per Inner / Tray / Bag" accent />
       <WeightEntry
         documentId={params.id}
+        docId={doc?.id}
         kind="per_inner"
         initial={(items || []) as any}
         readOnly={readOnly}
         showQtyPerInner
+        initialUnit={doc?.weight_unit || "kg"}
       />
       <PhotoUploader documentId={params.id} kind="per_inner" initial={(photos || []) as any} readOnly={readOnly} />
 

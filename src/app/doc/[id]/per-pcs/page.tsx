@@ -9,7 +9,7 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
   const supabase = createClient();
   const { data: doc } = await supabase
     .from("gr_documents")
-    .select("id,status")
+    .select("id,status,weight_unit")
     .eq("id", params.id)
     .single();
   const { data: items } = await supabase
@@ -31,9 +31,11 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
       <SectionHeader icon="balance" title="ขั้นตอนที่ 2 — ชั่ง Per Pcs" accent />
       <WeightEntry
         documentId={params.id}
+        docId={doc?.id}
         kind="per_pcs"
         initial={(items || []) as any}
         readOnly={readOnly}
+        initialUnit={doc?.weight_unit || "kg"}
       />
       <PhotoUploader documentId={params.id} kind="per_pcs" initial={(photos || []) as any} readOnly={readOnly} />
 

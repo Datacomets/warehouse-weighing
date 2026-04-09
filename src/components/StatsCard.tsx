@@ -5,17 +5,20 @@ export function StatsCard({
   min,
   max,
   digits = 3,
+  unit,
 }: {
   avg: number;
   min: number;
   max: number;
   digits?: number;
+  unit?: string;
 }) {
+  const suffix = unit ? ` ${unit}` : "";
   return (
     <div className="card grid grid-cols-3 divide-x divide-surface-container">
-      <Stat label="AVG" value={fmt(avg, digits)} />
-      <Stat label="MIN" value={fmt(min, digits)} />
-      <Stat label="MAX" value={fmt(max, digits)} />
+      <Stat label="AVG" value={fmt(avg, digits) + suffix} />
+      <Stat label="MIN" value={fmt(min, digits) + suffix} />
+      <Stat label="MAX" value={fmt(max, digits) + suffix} />
     </div>
   );
 }
