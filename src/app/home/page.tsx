@@ -18,9 +18,15 @@ export default async function HomePage({
   const tab = searchParams.tab === "completed" ? "completed" : "in_progress";
   const q = (searchParams.q || "").trim();
 
+  // operator เห็นเฉพาะงานของตัวเอง role อื่นเห็นทุกคน
+  const onlyMine = profile.role === "operator";
+
   const supabase = createClient();
   let query = supabase.from("gr_documents").select("*").order("created_at", { ascending: false });
 
+  if (onlyMine) {
+    query = query.eq("created_by", profile.id);
+  }
   if (tab === "completed") {
     query = query.eq("status", "completed");
   } else {
@@ -39,7 +45,7 @@ export default async function HomePage({
   return (
     <>
       <TopAppBar
-        title="COMETS GR"
+        title={onlyMine ? "งานของฉัน" : "COMETS GR"}
         subtitle={profile.full_name}
         rightSlot={
           <form action="/api/logout" method="post">
@@ -53,8 +59,16 @@ export default async function HomePage({
         <HomeFilters defaultQ={q} defaultTab={tab} />
 
         <section className="grid grid-cols-2 gap-3">
-          <Stat label="In Progress" value={inProgress} hint="active" />
-          <Stat label="Completed" value={completed} hint="all time" />
+          <Stat
+            label={onlyMine ? "ค้างของฉัน" : "In Progress"}
+            value={inProgress}
+            hint="ยังไม่เสร็จ"
+          />
+          <Stat
+            label={onlyMine ? "เสร็จแล้ว" : "Completed"}
+            value={completed}
+            hint={onlyMine ? "ของฉัน" : "all time"}
+          />
         </section>
 
         <div className="flex flex-col gap-4 mt-2">

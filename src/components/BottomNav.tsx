@@ -9,9 +9,16 @@ export function BottomNav({ role }: { role: UserRole }) {
   const path = usePathname();
 
   let items: { href: string; icon: string; label: string }[] = [];
-  if (role === "operator" || role === "qc") {
+  if (role === "operator") {
+    items = [
+      { href: "/home", icon: "pending_actions", label: "งานของฉัน" },
+      { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+      { href: "/profile", icon: "person", label: "โปรไฟล์" },
+    ];
+  } else if (role === "qc") {
     items = [
       { href: "/home", icon: "pending_actions", label: "เอกสาร" },
+      { href: "/team", icon: "groups", label: "ทีม" },
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
@@ -24,12 +31,14 @@ export function BottomNav({ role }: { role: UserRole }) {
   } else if (role === "manager") {
     items = [
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+      { href: "/team", icon: "groups", label: "ทีม" },
       { href: "/home", icon: "list_alt", label: "เอกสาร" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
   } else {
     items = [
       { href: "/users", icon: "group", label: "ผู้ใช้" },
+      { href: "/team", icon: "groups", label: "ทีม" },
       { href: "/admin/items", icon: "inventory_2", label: "Items" },
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
