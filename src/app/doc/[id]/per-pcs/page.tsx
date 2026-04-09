@@ -40,7 +40,7 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
       {!readOnly && (
         <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30">
           <Link href={`/doc/${params.id}/per-inner`} className="btn-primary w-full">
-            ถัดไป: ชั่ง Per Inner <Icon name="arrow_forward" />
+            ถัดไป: ชั่ง Per Inner/Tray/Bag <Icon name="arrow_forward" />
           </Link>
         </div>
       )}

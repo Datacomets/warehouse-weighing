@@ -28,7 +28,7 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
 
   return (
     <div className="flex flex-col gap-5">
-      <SectionHeader icon="inventory" title="ขั้นตอนที่ 3 — ชั่ง Per Inner / Tray" accent />
+      <SectionHeader icon="inventory" title="ขั้นตอนที่ 3 — ชั่ง Per Inner / Tray / Bag" accent />
       <WeightEntry
         documentId={params.id}
         kind="per_inner"

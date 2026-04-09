@@ -21,7 +21,7 @@ export default async function CountPage({ params }: { params: { id: string } }) 
         <div><b>LOT:</b> {doc.lot}</div>
         <div><b>Item:</b> {doc.item_code}</div>
         <div className="col-span-2"><b>Description:</b> {doc.description}</div>
-        <div><b>คาดหวัง:</b> {doc.actual_count ?? "-"} ลัง</div>
+        <div><b>ชิ้น/ลัง:</b> {doc.qty_per_carton ?? "-"}</div>
       </div>
       <CountGrid documentId={params.id} doc={doc} initial={(entries || []) as any} />
     </div>

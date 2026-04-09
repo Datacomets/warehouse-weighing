@@ -6,8 +6,9 @@ import { clsx } from "clsx";
 const STEPS = [
   { key: "header", label: "Header" },
   { key: "per-pcs", label: "Per Pcs" },
-  { key: "per-inner", label: "Per Inner" },
+  { key: "per-inner", label: "Per Inner/Tray/Bag" },
   { key: "count", label: "Per Carton" },
+  { key: "remainder", label: "นับเศษ" },
   { key: "issues", label: "Issues" },
   { key: "submit", label: "Submit" },
 ];

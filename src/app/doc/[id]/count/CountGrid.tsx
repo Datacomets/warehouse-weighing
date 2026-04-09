@@ -40,8 +40,13 @@ export function CountGrid({
 
   const s = stats(values);
   const counted = values.length;
-  const expected = doc.actual_count || 0;
-  const diff = expected ? counted - expected : 0;
+
+  function isOutlier(v: number) {
+    if (s.count < 3 || !Number.isFinite(v) || v <= 0) return false;
+    const range = s.max - s.min;
+    if (range === 0) return false;
+    return Math.abs(v - s.avg) > range * 0.45;
+  }
 
   async function persist(r: number, c: number, v: string) {
     const num = Number(v);
@@ -98,7 +103,13 @@ export function CountGrid({
                           setCells({ ...cells, [k]: v });
                         }}
                         onBlur={() => persist(r, c, cells[k] || "")}
-                        className="w-14 h-9 text-center text-xs border border-outline-variant/40 rounded bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary"
+                        className={clsx(
+                          "w-14 h-9 text-center text-xs rounded focus:outline-none focus:ring-2",
+                          cells[k] && isOutlier(Number(cells[k]))
+                            ? "border-2 border-error bg-error-container/30 text-error focus:ring-error"
+                            : "border border-outline-variant/40 bg-surface-container-low focus:ring-primary"
+                        )}
+                        title={cells[k] && isOutlier(Number(cells[k])) ? "ค่าผิดปกติ" : undefined}
                       />
                     </td>
                   );
@@ -121,30 +132,16 @@ export function CountGrid({
 
       <StatsCard avg={s.avg} min={s.min} max={s.max} />
 
-      {expected > 0 && (
-        <div
-          className={clsx(
-            "card flex items-center justify-between",
-            diff === 0
-              ? "border-l-4 border-success"
-              : "border-l-4 border-error"
-          )}
-        >
-          <div>
-            <span className="section-title">เปรียบเทียบ Packing List</span>
-            <p className="text-sm mt-1">
-              นับได้: <b>{counted}</b> / คาดหวัง: <b>{expected}</b>
-            </p>
-          </div>
-          <div className={clsx("text-xl font-headline font-bold", diff === 0 ? "text-success" : "text-error")}>
-            {diff > 0 ? `+${diff}` : diff}
-          </div>
-        </div>
-      )}
+      <div className="card border-l-4 border-primary-container">
+        <span className="section-title">สรุป Per Carton</span>
+        <p className="text-sm mt-1">
+          ชั่งแล้ว: <b>{counted}</b> ลัง
+        </p>
+      </div>
 
       <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30">
-        <Link href={`/doc/${documentId}/issues`} className="btn-primary w-full">
-          ถัดไป: รายงานปัญหา <Icon name="arrow_forward" />
+        <Link href={`/doc/${documentId}/remainder`} className="btn-primary w-full">
+          ถัดไป: นับเศษ <Icon name="arrow_forward" />
         </Link>
       </div>
     </div>

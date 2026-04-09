@@ -36,10 +36,9 @@ export function WeightEntry({
   const values = items.map((i) => Number(i.value));
   const s = stats(values);
 
-  // Highlight outliers (per_carton): outside [min..max] when count > 2.
-  // Since min/max are derived from same set, "outlier" means significantly off avg.
+  // Highlight outliers: values significantly away from the average
   function isOutlier(v: number) {
-    if (kind !== "per_carton" || s.count < 4) return false;
+    if (s.count < 3) return false;
     const range = s.max - s.min;
     if (range === 0) return false;
     return Math.abs(v - s.avg) > range * 0.45;

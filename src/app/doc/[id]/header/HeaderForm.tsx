@@ -15,7 +15,6 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
   const [f, setF] = useState({
     scale_name: doc.scale_name || "",
     qty_per_carton: doc.qty_per_carton ?? "",
-    actual_count: doc.actual_count ?? "",
     width_cm: doc.width_cm ?? "",
     length_cm: doc.length_cm ?? "",
     height_cm: doc.height_cm ?? "",
@@ -41,7 +40,6 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
     // validate ค่าลบ + ค่าที่ไม่สมเหตุสมผล
     const numFields = [
       { key: "qty_per_carton", label: "จำนวนชิ้น/ลัง" },
-      { key: "actual_count", label: "จำนวนที่นับได้" },
       { key: "width_cm", label: "กว้าง" },
       { key: "length_cm", label: "ยาว" },
       { key: "height_cm", label: "สูง" },
@@ -83,7 +81,6 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
     const payload: any = {
       ...f,
       qty_per_carton: f.qty_per_carton === "" ? null : Number(f.qty_per_carton),
-      actual_count: f.actual_count === "" ? null : Number(f.actual_count),
       width_cm: f.width_cm === "" ? null : Number(f.width_cm),
       length_cm: f.length_cm === "" ? null : Number(f.length_cm),
       height_cm: f.height_cm === "" ? null : Number(f.height_cm),
@@ -138,28 +135,17 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
           placeholder="เช่น WH-02"
         />
       </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="จำนวนชิ้น/ลัง">
-          <input
-            disabled={readOnly}
-            type="number"
-            inputMode="decimal"
-            value={f.qty_per_carton}
-            onChange={(e) => setF({ ...f, qty_per_carton: e.target.value })}
-            className="input-base"
-          />
-        </Field>
-        <Field label="จำนวนที่นับได้จริง (ลัง)">
-          <input
-            disabled={readOnly}
-            type="number"
-            inputMode="decimal"
-            value={f.actual_count}
-            onChange={(e) => setF({ ...f, actual_count: e.target.value })}
-            className="input-base"
-          />
-        </Field>
-      </div>
+      <Field label="จำนวนชิ้น/ลัง (Packing List)">
+        <input
+          disabled={readOnly}
+          type="number"
+          inputMode="decimal"
+          value={f.qty_per_carton}
+          onChange={(e) => setF({ ...f, qty_per_carton: e.target.value })}
+          className="input-base"
+          placeholder="เช่น 90"
+        />
+      </Field>
 
       <SectionHeader icon="straighten" title="ขนาดลัง (ซม.)" accent />
       <div className="grid grid-cols-3 gap-3">

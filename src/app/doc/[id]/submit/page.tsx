@@ -52,7 +52,7 @@ export default async function SubmitPage({ params }: { params: { id: string } })
             {hasPcs ? "✓" : "✗"} ชั่ง Per Pcs
           </li>
           <li className={hasInner ? "text-success" : "text-error"}>
-            {hasInner ? "✓" : "✗"} ชั่ง Per Inner
+            {hasInner ? "✓" : "✗"} ชั่ง Per Inner/Tray/Bag
           </li>
           <li className={hasCarton ? "text-success" : "text-error"}>
             {hasCarton ? "✓" : "✗"} ชั่ง Per Carton (Grid)
