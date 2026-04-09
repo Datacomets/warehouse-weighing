@@ -72,6 +72,12 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
       setErr(error?.message || "บันทึกไม่สำเร็จ");
       return;
     }
+    await supabase.from("audit_log").insert({
+      document_id: data.id,
+      actor: userId,
+      action: "create_doc",
+      detail: { wh_number: whNumber },
+    });
     router.push(`/doc/${data.id}/header`);
   }
 

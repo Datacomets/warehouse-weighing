@@ -7,6 +7,7 @@ import { DocumentCard } from "@/components/DocumentCard";
 import { Icon } from "@/components/Icon";
 import { clsx } from "clsx";
 import { startOfDayTH, endOfDayTH } from "@/lib/dateUtils";
+import { logger } from "@/lib/logger";
 
 type Tab = "pending" | "working" | "done_today" | "all";
 
@@ -66,7 +67,7 @@ export default async function AdminPage({
   ]);
 
   if (e1 || e2 || e3 || e4) {
-    console.error("Admin page query error:", e1 || e2 || e3 || e4);
+    logger.error("Admin page query error", { error: (e1 || e2 || e3 || e4)?.message });
   }
 
   const countPending = pendingAll?.length || 0;

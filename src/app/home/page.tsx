@@ -6,6 +6,7 @@ import { DocumentCard } from "@/components/DocumentCard";
 import { Icon } from "@/components/Icon";
 import Link from "next/link";
 import { HomeFilters } from "./HomeFilters";
+import { logger } from "@/lib/logger";
 
 export default async function HomePage({
   searchParams,
@@ -40,7 +41,7 @@ export default async function HomePage({
     );
   }
   const { data: docs, error } = await query;
-  if (error) console.error("Home page query error:", error);
+  if (error) logger.error("Home page query error", { error: error.message });
 
   const inProgress = (docs || []).filter((d: any) => d.status === "in_progress").length;
   const completed = (docs || []).filter((d: any) => d.status === "completed").length;

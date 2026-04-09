@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 
-export function HeaderForm({ doc }: { doc: any }) {
+export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
   const router = useRouter();
   const supabase = createClient();
   const readOnly = doc.status !== "in_progress";
@@ -98,6 +98,13 @@ export function HeaderForm({ doc }: { doc: any }) {
     if (error) {
       setErr(error.message);
       return;
+    }
+    if (userId) {
+      await supabase.from("audit_log").insert({
+        document_id: doc.id,
+        actor: userId,
+        action: "edit_header",
+      });
     }
     if (next) router.push(next);
     else router.refresh();

@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { DashboardCharts } from "./DashboardCharts";
 import { Icon } from "@/components/Icon";
 import { leadTimeMinutes } from "@/lib/stats";
+import { logger } from "@/lib/logger";
 
 const KPI_LEAD_TIME_MINUTES = 120; // 2 ชม. — สามารถเปลี่ยนได้ใน Settings
 
@@ -13,11 +14,13 @@ export default async function DashboardPage() {
   if (!profile) redirect("/login");
 
   const supabase = createClient();
-  const { data: docs } = await supabase
+  const { data: docs, error: docsErr } = await supabase
     .from("gr_documents")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(200);
+
+  if (docsErr) logger.error("Dashboard query error", { error: docsErr.message });
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
