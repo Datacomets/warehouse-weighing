@@ -37,7 +37,7 @@ export default async function AdminPage({
 
   // นับสรุปทุกแท็บ (สำหรับแสดงที่ chip)
   const [
-    { data: todayInProgress },
+    { data: inProgressAll },
     { data: todayCompleted },
     { data: pendingAll },
     { data: allDocs },
@@ -46,8 +46,6 @@ export default async function AdminPage({
       .from("gr_documents")
       .select("*")
       .eq("status", "in_progress")
-      .gte("created_at", startISO)
-      .lt("created_at", endISO)
       .order("created_at", { ascending: false }),
     supabase
       .from("gr_documents")
@@ -70,8 +68,9 @@ export default async function AdminPage({
       : Promise.resolve({ data: [] as any[] }),
   ]);
 
-  const countToday =
-    (todayInProgress?.length || 0) + (todayCompleted?.length || 0);
+  const countInProgress = inProgressAll?.length || 0;
+  const countTodayCompleted = todayCompleted?.length || 0;
+  const countCurrent = countInProgress + countTodayCompleted;
   const countPending = pendingAll?.length || 0;
   const countAll = allDocs?.length || 0;
 
@@ -93,14 +92,14 @@ export default async function AdminPage({
         <section className="grid grid-cols-3 gap-3">
           <SummaryCard
             label="กำลังดำเนินการ"
-            hint="วันนี้"
-            value={todayInProgress?.length || 0}
+            hint="ค้างนับ"
+            value={countInProgress}
             icon="autorenew"
           />
           <SummaryCard
             label="เสร็จสิ้น"
             hint="วันนี้"
-            value={todayCompleted?.length || 0}
+            value={countTodayCompleted}
             icon="check_circle"
           />
           <SummaryCard
@@ -113,7 +112,7 @@ export default async function AdminPage({
 
         {/* แท็บ */}
         <nav className="flex gap-2 overflow-x-auto -mx-4 px-4 no-scrollbar">
-          <TabLink tab="today" current={tab} label={`วันนี้ (${countToday})`} />
+          <TabLink tab="today" current={tab} label={`ปัจจุบัน (${countCurrent})`} />
           <TabLink
             tab="pending"
             current={tab}
@@ -140,10 +139,10 @@ export default async function AdminPage({
         {tab === "today" && (
           <>
             <Section
-              title="กำลังดำเนินการ (วันนี้)"
+              title="กำลังดำเนินการ (ค้างนับทั้งหมด)"
               icon="autorenew"
-              docs={todayInProgress || []}
-              emptyText="ไม่มีงานที่กำลังดำเนินการในวันนี้"
+              docs={inProgressAll || []}
+              emptyText="ไม่มีงานที่กำลังดำเนินการ"
             />
             <Section
               title="เสร็จสิ้น (วันนี้)"
