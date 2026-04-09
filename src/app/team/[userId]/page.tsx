@@ -6,6 +6,7 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { DocumentCard } from "@/components/DocumentCard";
 import { Icon } from "@/components/Icon";
+import { startOfDayTH } from "@/lib/dateUtils";
 
 type Tab = "in_progress" | "pending" | "completed" | "all";
 
@@ -56,8 +57,7 @@ export default async function TeamUserPage({
     .select("status,closed_at")
     .eq("created_by", params.userId);
 
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+  const startOfDay = startOfDayTH();
 
   let cInProgress = 0,
     cPending = 0,

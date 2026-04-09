@@ -4,6 +4,7 @@ import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Icon } from "@/components/Icon";
+import { startOfDayTH } from "@/lib/dateUtils";
 
 export default async function TeamPage() {
   const { profile } = await getCurrentUserAndProfile();
@@ -27,9 +28,7 @@ export default async function TeamPage() {
       .limit(1000),
   ]);
 
-  // ขอบเขตวันนี้
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+  const startOfDay = startOfDayTH();
 
   type Counts = {
     inProgress: number;

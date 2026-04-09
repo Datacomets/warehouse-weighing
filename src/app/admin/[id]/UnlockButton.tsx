@@ -11,11 +11,14 @@ export function UnlockButton({ docId }: { docId: string }) {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [err, setErr] = useState<string | null>(null);
+
   async function unlock() {
     if (!reason.trim()) return;
     setLoading(true);
+    setErr(null);
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase
+    const { error } = await supabase
       .from("gr_documents")
       .update({
         status: "in_progress",
@@ -24,6 +27,11 @@ export function UnlockButton({ docId }: { docId: string }) {
         ended_at: null,
       })
       .eq("id", docId);
+    if (error) {
+      setErr(error.message);
+      setLoading(false);
+      return;
+    }
     await supabase.from("audit_log").insert({
       document_id: docId,
       actor: user?.id,
@@ -52,6 +60,9 @@ export function UnlockButton({ docId }: { docId: string }) {
         className="input-base text-xs"
         placeholder="เช่น พนักงานกรอกน้ำหนักผิด"
       />
+      {err && (
+        <p className="text-xs text-error mt-1">{err}</p>
+      )}
       <div className="flex gap-2 mt-2">
         <button onClick={() => setOpen(false)} className="btn-secondary flex-1 h-9 text-xs">
           ยกเลิก

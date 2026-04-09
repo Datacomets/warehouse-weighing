@@ -25,6 +25,13 @@ export async function POST(req: Request) {
   if (!email || !password || !full_name) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: "รูปแบบอีเมลไม่ถูกต้อง" }, { status: 400 });
+  }
+  if (password.length < 6) {
+    return NextResponse.json({ error: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" }, { status: 400 });
+  }
 
   // Use service role to create user
   const admin = createSb(

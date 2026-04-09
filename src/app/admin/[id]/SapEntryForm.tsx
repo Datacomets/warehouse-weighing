@@ -22,8 +22,24 @@ export function SapEntryForm({ doc, userId }: { doc: any; userId: string }) {
     setLoading(true);
     setErr(null);
 
+    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+    const ALLOWED_TYPES = [
+      "image/jpeg", "image/png", "image/webp",
+      "application/pdf",
+    ];
+
     let attachmentUrl: string | null = doc.sap_attachment_url;
     if (file) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setErr("ไฟล์ต้องเป็น PDF หรือรูปภาพ (JPEG, PNG, WEBP) เท่านั้น");
+        setLoading(false);
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setErr("ไฟล์ใหญ่เกิน 20 MB");
+        setLoading(false);
+        return;
+      }
       const path = `${doc.id}/${Date.now()}-${file.name}`;
       const { data, error } = await supabase.storage.from("sap-attachments").upload(path, file);
       if (error) {

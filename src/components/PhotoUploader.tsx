@@ -24,12 +24,23 @@ export function PhotoUploader({
   const [photos, setPhotos] = useState<Photo[]>(initial);
   const [uploading, setUploading] = useState(false);
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
 
     for (const file of Array.from(files)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        alert(`ไฟล์ "${file.name}" ไม่ใช่รูปภาพที่รองรับ (JPEG, PNG, WEBP)`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`ไฟล์ "${file.name}" ใหญ่เกิน 10 MB`);
+        continue;
+      }
       const path = `${documentId}/${kind || "general"}/${Date.now()}-${file.name}`;
       const { data, error } = await supabase.storage.from("gr-photos").upload(path, file, {
         cacheControl: "3600",

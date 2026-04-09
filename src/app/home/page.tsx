@@ -37,7 +37,8 @@ export default async function HomePage({
       `wh_number.ilike.%${q}%,lot.ilike.%${q}%,item_code.ilike.%${q}%,description.ilike.%${q}%`
     );
   }
-  const { data: docs } = await query;
+  const { data: docs, error } = await query;
+  if (error) console.error("Home page query error:", error);
 
   const inProgress = (docs || []).filter((d: any) => d.status === "in_progress").length;
   const completed = (docs || []).filter((d: any) => d.status === "completed").length;
