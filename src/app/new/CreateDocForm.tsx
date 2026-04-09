@@ -120,8 +120,10 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
             className="input-base"
             placeholder="กรอกแล้ว tab ออก เพื่อดึง Description"
           />
-          {lookupMsg && (
+          {lookupMsg ? (
             <p className="text-[11px] text-outline mt-1">{lookupMsg}</p>
+          ) : (
+            <p className="text-[11px] text-outline mt-1">กรอก Item Code แล้วแตะที่อื่น เพื่อดึง Description จาก Item Master</p>
           )}
         </Field>
         <Field label="Description" required className="col-span-2">

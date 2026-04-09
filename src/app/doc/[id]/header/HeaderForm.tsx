@@ -38,6 +38,48 @@ export function HeaderForm({ doc }: { doc: any }) {
       return;
     }
 
+    // validate ค่าลบ + ค่าที่ไม่สมเหตุสมผล
+    const numFields = [
+      { key: "qty_per_carton", label: "จำนวนชิ้น/ลัง" },
+      { key: "actual_count", label: "จำนวนที่นับได้" },
+      { key: "width_cm", label: "กว้าง" },
+      { key: "length_cm", label: "ยาว" },
+      { key: "height_cm", label: "สูง" },
+      { key: "gross_weight", label: "Gross Weight" },
+      { key: "net_weight", label: "Net Weight" },
+    ] as const;
+    for (const nf of numFields) {
+      const v = f[nf.key];
+      if (v !== "" && Number(v) < 0) {
+        setSaving(false);
+        setErr(`${nf.label} ต้องไม่ติดลบ`);
+        return;
+      }
+      if (v !== "" && Number(v) > 999999) {
+        setSaving(false);
+        setErr(`${nf.label} มีค่ามากเกินไป`);
+        return;
+      }
+    }
+
+    // #21 MFG/EXP sanity
+    if (f.mfg_date) {
+      const y = new Date(f.mfg_date).getFullYear();
+      if (y < 2000 || y > 2100) {
+        setSaving(false);
+        setErr("MFG Date ดูไม่สมเหตุสมผล — ตรวจสอบปีอีกครั้ง");
+        return;
+      }
+    }
+    if (f.exp_date) {
+      const y = new Date(f.exp_date).getFullYear();
+      if (y < 2000 || y > 2100) {
+        setSaving(false);
+        setErr("EXP Date ดูไม่สมเหตุสมผล — ตรวจสอบปีอีกครั้ง");
+        return;
+      }
+    }
+
     const payload: any = {
       ...f,
       qty_per_carton: f.qty_per_carton === "" ? null : Number(f.qty_per_carton),

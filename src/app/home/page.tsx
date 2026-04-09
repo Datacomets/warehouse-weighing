@@ -33,8 +33,10 @@ export default async function HomePage({
     query = query.in("status", ["in_progress", "pending_sap"]);
   }
   if (q) {
+    // escape SQL LIKE wildcards
+    const escaped = q.replace(/[%_\\]/g, "\\$&");
     query = query.or(
-      `wh_number.ilike.%${q}%,lot.ilike.%${q}%,item_code.ilike.%${q}%,description.ilike.%${q}%`
+      `wh_number.ilike.%${escaped}%,lot.ilike.%${escaped}%,item_code.ilike.%${escaped}%,description.ilike.%${escaped}%`
     );
   }
   const { data: docs, error } = await query;

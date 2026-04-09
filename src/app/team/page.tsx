@@ -13,7 +13,6 @@ export default async function TeamPage() {
 
   const supabase = createClient();
 
-  // ดึง operator ทุกคน + เอกสารทั้งหมด (200 ล่าสุด) มา group ในหน่วยความจำ
   const [{ data: operators }, { data: docs }] = await Promise.all([
     supabase
       .from("profiles")
@@ -23,9 +22,8 @@ export default async function TeamPage() {
       .order("full_name", { ascending: true }),
     supabase
       .from("gr_documents")
-      .select("id,status,created_by,closed_at,started_at")
-      .order("created_at", { ascending: false })
-      .limit(1000),
+      .select("id,status,created_by,closed_at")
+      .in("status", ["in_progress", "pending_sap", "completed"]),
   ]);
 
   const startOfDay = startOfDayTH();
@@ -58,7 +56,6 @@ export default async function TeamPage() {
       ({ inProgress: 0, pending: 0, completedToday: 0, completedTotal: 0 } as Counts),
   }));
 
-  // เรียง: คนที่กำลังทำเยอะอยู่ก่อน แล้วคนที่ค้าง SAP เยอะ
   rows.sort((a, b) => {
     if (b.counts.inProgress !== a.counts.inProgress)
       return b.counts.inProgress - a.counts.inProgress;

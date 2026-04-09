@@ -25,7 +25,7 @@ export function BottomNav({ role }: { role: UserRole }) {
   } else if (role === "admin_sap") {
     items = [
       { href: "/admin", icon: "task_alt", label: "งาน SAP" },
-      { href: "/admin/completed", icon: "history", label: "เสร็จสิ้น" },
+      { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
   } else if (role === "manager") {
@@ -39,7 +39,6 @@ export function BottomNav({ role }: { role: UserRole }) {
     items = [
       { href: "/users", icon: "group", label: "ผู้ใช้" },
       { href: "/team", icon: "groups", label: "ทีม" },
-      { href: "/admin/items", icon: "inventory_2", label: "Items" },
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];

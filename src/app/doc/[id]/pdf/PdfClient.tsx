@@ -6,14 +6,23 @@ import { stats, fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
 // Dynamic import — @react-pdf/renderer is heavy and client-only.
 // Importing the whole button wrapper (which pulls in pdfDocs + react-pdf)
 // only when this component renders avoids bundling it into shared chunks.
-const PdfDownloadButtons = dynamic(() => import("./PdfDownloadButtons"), {
-  ssr: false,
-  loading: () => (
-    <button className="btn-primary" disabled>
-      <Icon name="download" /> กำลังโหลดตัวสร้าง PDF...
-    </button>
-  ),
-});
+const PdfDownloadButtons = dynamic(
+  () => import("./PdfDownloadButtons").catch(() => {
+    return { default: () => (
+      <button className="btn-secondary" disabled>
+        <Icon name="error" /> ไม่สามารถโหลดตัวสร้าง PDF ได้ — ลองรีเฟรชหน้า
+      </button>
+    )};
+  }),
+  {
+    ssr: false,
+    loading: () => (
+      <button className="btn-primary" disabled>
+        <Icon name="download" /> กำลังโหลดตัวสร้าง PDF...
+      </button>
+    ),
+  }
+);
 
 export function PdfClient({
   doc,

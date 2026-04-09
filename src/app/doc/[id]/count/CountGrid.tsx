@@ -89,8 +89,14 @@ export function CountGrid({
                         inputMode="decimal"
                         type="number"
                         step="0.001"
+                        min="0"
+                        max="99999"
                         value={cells[k] || ""}
-                        onChange={(e) => setCells({ ...cells, [k]: e.target.value })}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v !== "" && Number(v) < 0) return;
+                          setCells({ ...cells, [k]: v });
+                        }}
                         onBlur={() => persist(r, c, cells[k] || "")}
                         className="w-14 h-9 text-center text-xs border border-outline-variant/40 rounded bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary"
                       />
