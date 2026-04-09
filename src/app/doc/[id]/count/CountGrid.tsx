@@ -80,6 +80,7 @@ export function CountGrid({
                   const k = `${r}:${c}`;
                   return (
                     <td key={c} className="p-0.5">
+                      <div className="text-[9px] text-outline text-center font-bold mb-0.5">{cartonNo}</div>
                       <input
                         disabled={readOnly}
                         inputMode="decimal"
