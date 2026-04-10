@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
+import { Toast, useToast } from "@/components/Toast";
 
 export function SubmitPanel({
   docId,
@@ -18,6 +19,7 @@ export function SubmitPanel({
   const [loading, setLoading] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const toast = useToast();
 
   async function submit() {
     setLoading(true);
@@ -43,8 +45,11 @@ export function SubmitPanel({
       action: "submit_work",
     });
     setLoading(false);
-    router.push("/home");
-    router.refresh();
+    toast.show("ส่งงานสำเร็จ!");
+    setTimeout(() => {
+      router.push("/home");
+      router.refresh();
+    }, 1500);
   }
 
   if (status === "pending_sap" || status === "completed") {
@@ -59,6 +64,7 @@ export function SubmitPanel({
 
   return (
     <>
+      <Toast message={toast.msg} />
       {!confirm ? (
         <button
           disabled={!canSubmit}

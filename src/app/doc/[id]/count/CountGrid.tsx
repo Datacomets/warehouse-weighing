@@ -69,48 +69,43 @@ export function CountGrid({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="card overflow-x-auto">
-        <table className="text-xs border-collapse">
-          <tbody>
-            {Array.from({ length: rows }, (_, r) => (
-              <tr key={r}>
-                <td className="text-outline pr-1 text-[10px] font-bold">{r * COLS + 1}-{(r + 1) * COLS}</td>
-                {Array.from({ length: COLS }, (_, c) => {
-                  const cartonNo = r * COLS + c + 1;
-                  const k = `${r}:${c}`;
-                  return (
-                    <td key={c} className="p-0.5">
-                      <div className="text-[9px] text-outline text-center font-bold mb-0.5">{cartonNo}</div>
-                      <input
-                        disabled={readOnly}
-                        inputMode="decimal"
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        max="99999"
-                        value={cells[k] || ""}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v !== "" && Number(v) < 0) return;
-                          setCells({ ...cells, [k]: v });
-                        }}
-                        onBlur={() => persist(r, c, cells[k] || "")}
-                        className={clsx(
-                          "w-14 h-9 text-center text-xs rounded focus:outline-none focus:ring-2",
-                          cells[k] && isOutlier(Number(cells[k]))
-                            ? "border-2 border-error bg-error-container/30 text-error focus:ring-error"
-                            : "border border-outline-variant/40 bg-surface-container-low focus:ring-primary"
-                        )}
-                        title={cells[k] && isOutlier(Number(cells[k])) ? "ค่าผิดปกติ" : undefined}
-                        placeholder={String(cartonNo)}
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card">
+        <div className="flex flex-wrap gap-1">
+          {Array.from({ length: rows * COLS }, (_, idx) => {
+            const r = Math.floor(idx / COLS);
+            const c = idx % COLS;
+            const cartonNo = idx + 1;
+            const k = `${r}:${c}`;
+            return (
+              <div key={k} className="flex flex-col items-center">
+                <div className="text-[9px] text-outline font-bold mb-0.5">{cartonNo}</div>
+                <input
+                  disabled={readOnly}
+                  inputMode="decimal"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  max="99999"
+                  value={cells[k] || ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v !== "" && Number(v) < 0) return;
+                    setCells({ ...cells, [k]: v });
+                  }}
+                  onBlur={() => persist(r, c, cells[k] || "")}
+                  className={clsx(
+                    "w-16 h-10 text-center text-sm rounded focus:outline-none focus:ring-2",
+                    cells[k] && isOutlier(Number(cells[k]))
+                      ? "border-2 border-error bg-error-container/30 text-error focus:ring-error"
+                      : "border border-outline-variant/40 bg-surface-container-low focus:ring-primary"
+                  )}
+                  title={cells[k] && isOutlier(Number(cells[k])) ? "ค่าผิดปกติ" : undefined}
+                  placeholder={String(cartonNo)}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {!readOnly && (
@@ -133,9 +128,14 @@ export function CountGrid({
       </div>
 
       <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30">
-        <Link href={`/doc/${documentId}/remainder`} className="btn-primary w-full">
-          ถัดไป: นับเศษ <Icon name="arrow_forward" />
-        </Link>
+        <div className="flex gap-2">
+          <Link href={`/doc/${documentId}/per-inner`} className="btn-secondary flex-none px-4">
+            <Icon name="arrow_back" /> ก่อนหน้า
+          </Link>
+          <Link href={`/doc/${documentId}/remainder`} className="btn-primary flex-1">
+            นับเศษ <Icon name="arrow_forward" />
+          </Link>
+        </div>
       </div>
     </div>
   );

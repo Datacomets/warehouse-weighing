@@ -94,6 +94,7 @@ export function WeightEntry({
   }
 
   async function removeValue(id: string) {
+    if (!confirm("ต้องการลบค่านี้หรือไม่?")) return;
     const { error } = await supabase.from("weight_measurements").delete().eq("id", id);
     if (!error) setItems(items.filter((i) => i.id !== id));
   }

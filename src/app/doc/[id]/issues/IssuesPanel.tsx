@@ -70,6 +70,7 @@ export function IssuesPanel({
   }
 
   async function remove(id: string) {
+    if (!confirm("ต้องการลบรายการปัญหานี้หรือไม่?")) return;
     await supabase.from("issue_reports").delete().eq("id", id);
     setIssues(issues.filter((i) => i.id !== id));
   }
@@ -216,9 +217,14 @@ export function IssuesPanel({
       </div>
 
       <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30">
-        <Link href={`/doc/${documentId}/submit`} className="btn-primary w-full">
-          ไปหน้าส่งงาน <Icon name="arrow_forward" />
-        </Link>
+        <div className="flex gap-2">
+          <Link href={`/doc/${documentId}/remainder`} className="btn-secondary flex-none px-4">
+            <Icon name="arrow_back" /> ก่อนหน้า
+          </Link>
+          <Link href={`/doc/${documentId}/submit`} className="btn-primary flex-1">
+            ส่งงาน <Icon name="arrow_forward" />
+          </Link>
+        </div>
       </div>
     </div>
   );

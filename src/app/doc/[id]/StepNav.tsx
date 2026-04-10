@@ -2,35 +2,48 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
+import { Icon } from "@/components/Icon";
 
 const STEPS = [
-  { key: "header", label: "Header" },
-  { key: "per-pcs", label: "Per Pcs" },
-  { key: "per-inner", label: "Per Inner/Tray/Bag" },
-  { key: "count", label: "Per Carton" },
+  { key: "header", label: "ข้อมูลหลัก" },
+  { key: "per-pcs", label: "ชั่งต่อชิ้น" },
+  { key: "per-inner", label: "ชั่งต่อถุง/ถาด" },
+  { key: "count", label: "ชั่งต่อลัง" },
   { key: "remainder", label: "นับเศษ" },
-  { key: "issues", label: "Issues" },
-  { key: "submit", label: "Submit" },
+  { key: "issues", label: "ปัญหา" },
+  { key: "submit", label: "ส่งงาน" },
 ];
 
-export function StepNav({ docId }: { docId: string }) {
+export function StepNav({
+  docId,
+  completed = {},
+}: {
+  docId: string;
+  completed?: Record<string, boolean>;
+}) {
   const path = usePathname();
   return (
     <nav className="flex gap-2 overflow-x-auto no-scrollbar mb-4 -mx-4 px-4 sticky top-16 bg-background z-30 pb-2 pt-1">
       {STEPS.map((s, i) => {
         const href = `/doc/${docId}/${s.key}`;
         const active = path === href || path.startsWith(href);
+        const done = !!completed[s.key];
         return (
           <Link
             key={s.key}
             href={href}
             className={clsx(
-              "px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold border transition-colors",
+              "px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold border transition-colors flex items-center gap-1",
               active
                 ? "bg-primary-container text-on-primary border-primary-container"
+                : done
+                ? "bg-success/10 text-success border-success/30"
                 : "bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:bg-surface-container"
             )}
           >
+            {done && !active && (
+              <Icon name="check_circle" className="text-success text-sm" />
+            )}
             {i + 1}. {s.label}
           </Link>
         );

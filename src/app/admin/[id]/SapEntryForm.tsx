@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import { Toast, useToast } from "@/components/Toast";
 
 export function SapEntryForm({ doc, userId }: { doc: any; userId: string }) {
   const router = useRouter();
@@ -13,6 +14,7 @@ export function SapEntryForm({ doc, userId }: { doc: any; userId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const toast = useToast();
 
   async function save() {
     if (!cfsd.trim()) {
@@ -77,12 +79,16 @@ export function SapEntryForm({ doc, userId }: { doc: any; userId: string }) {
     });
 
     setLoading(false);
-    router.push("/admin");
-    router.refresh();
+    toast.show("นำเข้า SAP สำเร็จ!");
+    setTimeout(() => {
+      router.push("/admin");
+      router.refresh();
+    }, 1500);
   }
 
   return (
     <div className="card border-l-4 border-tertiary-fixed-dim flex flex-col gap-3">
+      <Toast message={toast.msg} />
       <h3 className="font-headline font-bold text-primary">บันทึกเลข SAP</h3>
       <Field label="Inbound Delivery ID (CFSD)" required>
         <input

@@ -22,6 +22,29 @@ export default async function DocLayout({
     .single();
   if (!doc) notFound();
 
+  // ตรวจว่า step ไหนมีข้อมูลแล้ว
+  const [{ data: weights }, { count: gridCount }] = await Promise.all([
+    supabase
+      .from("weight_measurements")
+      .select("kind")
+      .eq("document_id", params.id),
+    supabase
+      .from("count_grid_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("document_id", params.id),
+  ]);
+
+  const kinds = new Set((weights || []).map((w: any) => w.kind));
+  const completed: Record<string, boolean> = {
+    header: !!(doc.scale_name || doc.qty_per_carton || doc.gross_weight),
+    "per-pcs": kinds.has("per_pcs"),
+    "per-inner": kinds.has("per_inner"),
+    count: (gridCount || 0) > 0,
+    remainder: doc.remainder_pcs != null,
+    issues: true, // optional step — always "ok"
+    submit: doc.status === "pending_sap" || doc.status === "completed",
+  };
+
   const readOnly = doc.status !== "in_progress";
 
   return (
@@ -33,7 +56,7 @@ export default async function DocLayout({
         rightSlot={<StatusBadge status={doc.status} />}
       />
       <main className="mt-16 pb-32 px-4">
-        <StepNav docId={doc.id} />
+        <StepNav docId={doc.id} completed={completed} />
         {readOnly && (
           <div className="bg-secondary-container/60 border border-outline-variant/30 text-on-secondary-container text-xs px-3 py-2 rounded-lg mb-3">
             เอกสารนี้ถูกล็อก (Status: {doc.status}). ขอให้ Admin "ปลดล็อก" หากต้องการแก้ไข

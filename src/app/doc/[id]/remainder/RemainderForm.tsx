@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Field } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import { StepButtons } from "@/components/StepButtons";
+import { Toast, useToast } from "@/components/Toast";
 
 export function RemainderForm({
   doc,
@@ -21,6 +22,7 @@ export function RemainderForm({
   );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const toast = useToast();
 
   const qtyPerCarton = Number(doc.qty_per_carton) || 0;
   const remainder = Number(remainderPcs) || 0;
@@ -53,11 +55,13 @@ export function RemainderForm({
       setErr(error.message);
       return;
     }
+    toast.show("บันทึกเศษสำเร็จ!");
     router.refresh();
   }
 
   return (
     <>
+      <Toast message={toast.msg} />
       {/* ข้อมูลจากขั้นตอนก่อน */}
       <div className="card text-xs grid grid-cols-2 gap-2">
         <div><b>ชิ้น/ลัง (Packing List):</b> {qtyPerCarton || "-"}</div>
@@ -132,11 +136,12 @@ export function RemainderForm({
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30">
-        <Link href={`/doc/${doc.id}/issues`} className="btn-primary w-full">
-          ถัดไป: รายงานปัญหา <Icon name="arrow_forward" />
-        </Link>
-      </div>
+      <StepButtons
+        prev={`/doc/${doc.id}/count`}
+        prevLabel="ชั่งต่อลัง"
+        next={`/doc/${doc.id}/issues`}
+        nextLabel="รายงานปัญหา"
+      />
     </>
   );
 }

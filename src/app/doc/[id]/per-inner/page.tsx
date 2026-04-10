@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { WeightEntry } from "@/components/WeightEntry";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { SectionHeader } from "@/components/Field";
-import { Icon } from "@/components/Icon";
+import { StepButtons } from "@/components/StepButtons";
 
 export default async function PerInnerPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -43,11 +43,12 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
       <PhotoUploader documentId={params.id} kind="per_inner" initial={(photos || []) as any} readOnly={readOnly} />
 
       {!readOnly && (
-        <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30">
-          <Link href={`/doc/${params.id}/count`} className="btn-primary w-full">
-            ถัดไป: ชั่ง Per Carton <Icon name="arrow_forward" />
-          </Link>
-        </div>
+        <StepButtons
+          prev={`/doc/${params.id}/per-pcs`}
+          prevLabel="ชั่งต่อชิ้น"
+          next={`/doc/${params.id}/count`}
+          nextLabel="ชั่งต่อลัง"
+        />
       )}
     </div>
   );
