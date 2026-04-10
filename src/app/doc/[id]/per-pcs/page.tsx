@@ -37,7 +37,6 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
         kind="per_pcs"
         initial={(items || []) as any}
         readOnly={readOnly}
-        showPer100Toggle
         initialUnit={doc.weight_unit || "kg"}
       />
       <PhotoUploader documentId={params.id} kind="per_pcs" initial={(photos || []) as any} readOnly={readOnly} />
