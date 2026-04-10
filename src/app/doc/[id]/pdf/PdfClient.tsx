@@ -37,6 +37,11 @@ export function PdfClient({
   const perInner = stats(items.filter((i) => i.kind === "per_inner").map((i) => Number(i.value)));
   const perCarton = stats(grid.map((g: any) => Number(g.value)));
   const cartonCount = grid.length;
+  const unit = doc.weight_unit || "kg";
+  const unitLabel = unit === "g" ? "g" : unit === "pcs" ? "ชิ้น" : "kg";
+  const remainderPcs = Number(doc.remainder_pcs) || 0;
+  const qtyPerCarton = Number(doc.qty_per_carton) || 0;
+  const totalPcs = qtyPerCarton * cartonCount + remainderPcs;
 
   return (
     <div className="flex flex-col gap-4">
@@ -62,11 +67,14 @@ export function PdfClient({
           <Row label="Delivery" value={fmtDate(doc.delivery_date)} />
           <Row label="Scale" value={doc.scale_name} />
           <Row label="Qty/Carton" value={doc.qty_per_carton} />
-          <Row label="Actual Cartons" value={doc.actual_count} />
+          <Row label="ลังเต็ม" value={cartonCount} />
+          <Row label="เศษ (ชิ้น)" value={remainderPcs || "-"} />
+          <Row label="รวมชิ้น" value={totalPcs.toLocaleString()} />
+          <Row label="หน่วยวัด" value={unitLabel} />
           <Row label="MFG" value={fmtDate(doc.mfg_date)} />
           <Row label="EXP" value={fmtDate(doc.exp_date)} />
-          <Row label="Gross" value={`${doc.gross_weight ?? "-"} kg`} />
-          <Row label="Net" value={`${doc.net_weight ?? "-"} kg`} />
+          <Row label="Gross" value={`${doc.gross_weight ?? "-"} ${unitLabel}`} />
+          <Row label="Net" value={`${doc.net_weight ?? "-"} ${unitLabel}`} />
         </div>
 
         <table className="w-full text-xs mt-4 border border-outline-variant/50">
@@ -81,7 +89,7 @@ export function PdfClient({
           </thead>
           <tbody>
             <Trow label="Per Pcs" data={perPcs} />
-            <Trow label="Per Inner" data={perInner} />
+            <Trow label="Per Inner/Tray/Bag" data={perInner} />
             <Trow label="Per Carton" data={perCarton} />
           </tbody>
         </table>
@@ -90,7 +98,7 @@ export function PdfClient({
           <p><b>เริ่ม:</b> {fmtDateTime(doc.started_at)}</p>
           <p><b>สิ้นสุด:</b> {fmtDateTime(doc.ended_at)}</p>
           <p><b>Lead Time:</b> {leadTimeText(doc.started_at, doc.ended_at)}</p>
-          <p><b>Cartons ชั่งแล้ว:</b> {cartonCount}</p>
+          <p><b>Cartons ชั่งแล้ว:</b> {cartonCount} ลัง + เศษ {remainderPcs} ชิ้น = {totalPcs.toLocaleString()} ชิ้น</p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 mt-8">

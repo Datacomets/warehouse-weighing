@@ -36,6 +36,11 @@ export function RemainderForm({
       setSaving(false);
       return;
     }
+    if (val !== null && !Number.isInteger(val)) {
+      setErr("จำนวนเศษต้องเป็นจำนวนเต็ม");
+      setSaving(false);
+      return;
+    }
     const { error } = await supabase
       .from("gr_documents")
       .update({
@@ -67,6 +72,7 @@ export function RemainderForm({
             type="number"
             inputMode="numeric"
             min="0"
+            step="1"
             value={remainderPcs}
             onChange={(e) => {
               const v = e.target.value;

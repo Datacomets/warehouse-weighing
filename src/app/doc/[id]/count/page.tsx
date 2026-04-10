@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CountGrid } from "./CountGrid";
 import { SectionHeader } from "@/components/Field";
@@ -9,6 +10,7 @@ export default async function CountPage({ params }: { params: { id: string } }) 
     .select("*")
     .eq("id", params.id)
     .single();
+  if (!doc) notFound();
   const { data: entries } = await supabase
     .from("count_grid_entries")
     .select("*")

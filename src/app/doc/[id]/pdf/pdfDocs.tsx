@@ -46,11 +46,13 @@ export function WeightSheetPdf({ doc, perPcs, perInner, perCarton }: any) {
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
           <Cell label="Scale" value={doc.scale_name} />
           <Cell label="Qty / Carton" value={String(doc.qty_per_carton ?? "-")} />
-          <Cell label="Actual Cartons" value={String(doc.actual_count ?? "-")} />
+          <Cell label="Full Cartons" value={String(doc.actual_count ?? "-")} />
+          <Cell label="Remainder (pcs)" value={String(doc.remainder_pcs ?? "0")} />
+          <Cell label="Unit" value={doc.weight_unit || "kg"} />
           <Cell label="MFG" value={fmtDate(doc.mfg_date)} />
           <Cell label="EXP" value={fmtDate(doc.exp_date)} />
-          <Cell label="Gross Weight" value={`${doc.gross_weight ?? "-"} kg`} />
-          <Cell label="Net Weight" value={`${doc.net_weight ?? "-"} kg`} />
+          <Cell label="Gross Weight" value={`${doc.gross_weight ?? "-"} ${doc.weight_unit || "kg"}`} />
+          <Cell label="Net Weight" value={`${doc.net_weight ?? "-"} ${doc.weight_unit || "kg"}`} />
         </View>
 
         <View style={styles.table}>
@@ -62,7 +64,7 @@ export function WeightSheetPdf({ doc, perPcs, perInner, perCarton }: any) {
             <Text style={styles.th}>N</Text>
           </View>
           <Trow label="Per Pcs" data={perPcs} />
-          <Trow label="Per Inner" data={perInner} />
+          <Trow label="Per Inner/Tray/Bag" data={perInner} />
           <Trow label="Per Carton" data={perCarton} />
         </View>
 

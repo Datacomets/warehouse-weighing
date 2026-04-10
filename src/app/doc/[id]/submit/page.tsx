@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitPanel } from "./SubmitPanel";
 import { SectionHeader } from "@/components/Field";
@@ -12,8 +13,8 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     .select("*")
     .eq("id", params.id)
     .single();
+  if (!doc) notFound();
 
-  // Check completeness — Per Pcs + Per Inner (weight_measurements) + Per Carton (count_grid_entries)
   const { data: items } = await supabase
     .from("weight_measurements")
     .select("kind")
@@ -27,7 +28,13 @@ export default async function SubmitPage({ params }: { params: { id: string } })
   const hasPcs = kinds.has("per_pcs");
   const hasInner = kinds.has("per_inner");
   const hasCarton = (gridCount || 0) > 0;
-  const hasAll = hasPcs && hasInner && hasCarton;
+  const hasRemainder = hasCarton && (doc.remainder_pcs != null);
+  const hasAll = hasPcs && hasInner && hasCarton && hasRemainder;
+
+  const qtyPerCarton = Number(doc.qty_per_carton) || 0;
+  const fullCartons = gridCount || 0;
+  const remainderPcs = Number(doc.remainder_pcs) || 0;
+  const totalPcs = qtyPerCarton * fullCartons + remainderPcs;
 
   return (
     <div className="flex flex-col gap-5">
@@ -57,8 +64,32 @@ export default async function SubmitPage({ params }: { params: { id: string } })
           <li className={hasCarton ? "text-success" : "text-error"}>
             {hasCarton ? "✓" : "✗"} ชั่ง Per Carton (Grid)
           </li>
+          <li className={hasRemainder ? "text-success" : "text-error"}>
+            {hasRemainder ? "✓" : "✗"} นับเศษ (Remainder)
+          </li>
         </ul>
       </div>
+
+      {/* สรุปจำนวน */}
+      {hasCarton && (
+        <div className="card border-l-4 border-primary-container">
+          <span className="section-title">สรุปจำนวนรวม</span>
+          <div className="grid grid-cols-3 gap-2 mt-2 text-center text-sm">
+            <div>
+              <div className="text-xl font-headline font-bold text-primary">{fullCartons}</div>
+              <div className="text-[10px] text-outline">ลังเต็ม</div>
+            </div>
+            <div>
+              <div className="text-xl font-headline font-bold text-tertiary-fixed-dim">{remainderPcs}</div>
+              <div className="text-[10px] text-outline">ชิ้นเศษ</div>
+            </div>
+            <div>
+              <div className="text-xl font-headline font-bold text-primary">{totalPcs.toLocaleString()}</div>
+              <div className="text-[10px] text-outline">ชิ้นรวม</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Link href={`/doc/${params.id}/pdf`} className="btn-secondary self-start">
         <Icon name="picture_as_pdf" /> ดูตัวอย่าง / Export PDF
