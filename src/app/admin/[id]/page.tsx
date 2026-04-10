@@ -64,7 +64,7 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
             <Info label="Item Code" value={doc.item_code} />
             <Info label="Description" value={doc.description} className="col-span-2" />
             <Info label="LOT" value={doc.lot} />
-            <Info label="Item Supplier" value={doc.supplier} />
+            <Info label="ชื่อสินค้าฝั่ง Supplier" value={doc.supplier} />
             <Info label="Delivery Date" value={fmtDate(doc.delivery_date)} />
             <Info label="Notification ID" value={doc.sap_notification_id} />
             <Info label="Qty/Carton" value={doc.qty_per_carton} />

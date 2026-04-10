@@ -140,12 +140,12 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
             className="input-base"
           />
         </Field>
-        <Field label="Item Supplier" className="col-span-2">
+        <Field label="ชื่อสินค้าฝั่ง Supplier" hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้" className="col-span-2">
           <input
             value={form.supplier}
             onChange={(e) => setForm({ ...form, supplier: e.target.value })}
             className="input-base"
-            placeholder="กรอกชื่อ supplier ของ item นี้"
+            placeholder="เช่น LOVE POTION GLX LIP GLOSS"
           />
         </Field>
         <Field label="Delivery Date" className="col-span-2">

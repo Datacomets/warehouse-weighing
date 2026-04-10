@@ -41,7 +41,7 @@ export function WeightSheetPdf({ doc, perPcs, perInner, perCarton }: any) {
           <Cell label="LOT" value={doc.lot} />
           <Cell label="PO" value={doc.po_number} />
           <Cell label="Item Code" value={doc.item_code} />
-          <Cell label="Item Supplier" value={doc.supplier} />
+          <Cell label="Supplier Item Name" value={doc.supplier} />
           <Cell label="Description" value={doc.description} full />
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
           <Cell label="Scale" value={doc.scale_name} />

@@ -62,7 +62,7 @@ export function PdfClient({
           <Row label="LOT" value={doc.lot} />
           <Row label="PO" value={doc.po_number} />
           <Row label="Item Code" value={doc.item_code} />
-          <Row label="Item Supplier" value={doc.supplier} />
+          <Row label="ชื่อสินค้าฝั่ง Supplier" value={doc.supplier} />
           <Row label="Description" value={doc.description} className="col-span-2" />
           <Row label="Delivery" value={fmtDate(doc.delivery_date)} />
           <Row label="Scale" value={doc.scale_name} />

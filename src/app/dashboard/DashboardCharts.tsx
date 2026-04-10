@@ -58,7 +58,7 @@ export function DashboardCharts({
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="card">
-        <span className="section-title">น้ำหนักรวม / Item Supplier (kg)</span>
+        <span className="section-title">น้ำหนักรวม / ชื่อสินค้าฝั่ง Supplier (kg)</span>
         <div className="h-64 mt-2">
           <ResponsiveContainer>
             <BarChart data={supplierData} layout="vertical" margin={{ left: 40 }}>

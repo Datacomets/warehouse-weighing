@@ -121,7 +121,7 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
           <div><b>LOT:</b> {doc.lot}</div>
           <div><b>PO:</b> {doc.po_number}</div>
           <div className="col-span-2"><b>Item:</b> {doc.item_code} — {doc.description}</div>
-          <div className="col-span-2"><b>Item Supplier:</b> {doc.supplier || "-"}</div>
+          <div className="col-span-2"><b>ชื่อสินค้าฝั่ง Supplier:</b> {doc.supplier || "-"}</div>
         </div>
       </div>
 
