@@ -118,44 +118,12 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
           isOutlier={isOutlier}
         />
 
-        {/* Per Carton Grid — ค่าทุกรายการ */}
-        <div className="card">
-          <div className="flex items-center gap-2 mb-2">
-            <Icon name="local_shipping" className="text-primary text-base" />
-            <span className="section-title">Per Carton ({perCarton.count} ลัง)</span>
-          </div>
-          {perCarton.count > 0 && (
-            <>
-              <div className="grid grid-cols-3 gap-1 text-[10px] text-outline mb-2">
-                <span>AVG: <b className="text-on-surface">{fmt(perCarton.avg)}</b></span>
-                <span>MIN: <b className="text-on-surface">{fmt(perCarton.min)}</b></span>
-                <span>MAX: <b className="text-on-surface">{fmt(perCarton.max)}</b></span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {gridValues.map((v, i) => {
-                  const out = isOutlier(v, perCarton);
-                  return (
-                    <span
-                      key={i}
-                      className={clsx(
-                        "inline-flex items-center justify-center w-14 h-8 text-[11px] font-bold rounded",
-                        out
-                          ? "bg-error-container/60 border-2 border-error text-error"
-                          : "bg-surface-container-low border border-outline-variant/30 text-on-surface"
-                      )}
-                      title={out ? "ค่าผิดปกติ" : `ลัง ${i + 1}`}
-                    >
-                      {fmt(v)}
-                    </span>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          {perCarton.count === 0 && (
-            <p className="text-xs text-outline text-center py-2">ยังไม่มีข้อมูล Per Carton</p>
-          )}
-        </div>
+        {/* Per Carton Grid — ตาราง 10 ช่องต่อแถว */}
+        <CartonGrid
+          entries={gridEntries || []}
+          perCarton={perCarton}
+          isOutlier={isOutlier}
+        />
 
         {/* ปัญหา / Issues */}
         <div className="card">
@@ -292,6 +260,83 @@ function WeightSection({
         </>
       ) : (
         <p className="text-xs text-outline text-center py-2">ยังไม่มีข้อมูล</p>
+      )}
+    </div>
+  );
+}
+
+const COLS = 10;
+
+function CartonGrid({
+  entries,
+  perCarton,
+  isOutlier,
+}: {
+  entries: any[];
+  perCarton: ReturnType<typeof stats>;
+  isOutlier: (v: number, s: ReturnType<typeof stats>) => boolean;
+}) {
+  // สร้าง map จาก entries
+  const cells: Record<string, number> = {};
+  let maxRow = 0;
+  entries.forEach((e: any) => {
+    cells[`${e.row_index}:${e.col_index}`] = Number(e.value);
+    if (e.row_index > maxRow) maxRow = e.row_index;
+  });
+  const totalRows = entries.length > 0 ? maxRow + 1 : 0;
+
+  return (
+    <div className="card">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon name="local_shipping" className="text-primary text-base" />
+        <span className="section-title">Per Carton ({perCarton.count} ลัง)</span>
+      </div>
+      {perCarton.count > 0 ? (
+        <>
+          <div className="grid grid-cols-3 gap-1 text-[10px] text-outline mb-3">
+            <span>AVG: <b className="text-on-surface">{fmt(perCarton.avg)}</b></span>
+            <span>MIN: <b className="text-on-surface">{fmt(perCarton.min)}</b></span>
+            <span>MAX: <b className="text-on-surface">{fmt(perCarton.max)}</b></span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="text-xs border-collapse">
+              <tbody>
+                {Array.from({ length: totalRows }, (_, r) => (
+                  <tr key={r}>
+                    <td className="text-outline pr-1 text-[10px] font-bold whitespace-nowrap">
+                      {r * COLS + 1}-{(r + 1) * COLS}
+                    </td>
+                    {Array.from({ length: COLS }, (_, c) => {
+                      const cartonNo = r * COLS + c + 1;
+                      const val = cells[`${r}:${c}`];
+                      const hasVal = val !== undefined;
+                      const out = hasVal && isOutlier(val, perCarton);
+                      return (
+                        <td key={c} className="p-0.5 text-center">
+                          <div className="text-[9px] text-outline font-bold">{cartonNo}</div>
+                          <div
+                            className={clsx(
+                              "w-14 h-9 flex items-center justify-center text-[11px] font-bold rounded",
+                              !hasVal
+                                ? "bg-surface-container-low border border-outline-variant/20 text-outline"
+                                : out
+                                ? "bg-error-container/60 border-2 border-error text-error"
+                                : "bg-surface-container-low border border-outline-variant/30 text-on-surface"
+                            )}
+                          >
+                            {hasVal ? fmt(val) : ""}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-outline text-center py-2">ยังไม่มีข้อมูล Per Carton</p>
       )}
     </div>
   );
