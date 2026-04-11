@@ -74,6 +74,30 @@ export function WeightEntry({
     });
   }
 
+  async function addValueDirect(v: number) {
+    if (!Number.isFinite(v) || v <= 0) return;
+    const seq = items.length + 1;
+    const row: any = {
+      document_id: documentId,
+      kind,
+      seq,
+      value: v,
+      per_100: showPer100Toggle ? per100 : false,
+      qty_per_inner: showQtyPerInner && qtyPerInner ? Number(qtyPerInner) : null,
+    };
+    const { data, error } = await supabase
+      .from("weight_measurements")
+      .insert(row)
+      .select("*")
+      .single();
+    if (!error && data) {
+      setItems((prev) => [...prev, data as WeightMeasurement]);
+      setDraft("");
+    } else if (error) {
+      alert(error.message);
+    }
+  }
+
   async function addValue() {
     const v = Number(draft);
     if (!Number.isFinite(v) || v <= 0) return;
@@ -299,14 +323,17 @@ export function WeightEntry({
                   onClick={async () => {
                     const val = await scale.readOnce();
                     if (val !== null) {
+                      // อ่านค่าแล้วบันทึกอัตโนมัติทันที
                       setDraft(String(val));
+                      await addValueDirect(val);
                     }
                   }}
                   disabled={scale.status === ("reading" as any)}
-                  className="btn-secondary px-3"
-                  title="อ่านค่าจากเครื่องชั่ง"
+                  className="btn-primary px-4 bg-success"
+                  title="อ่านค่าจากเครื่องชั่งแล้วบันทึกทันที"
                 >
                   <Icon name="scale" />
+                  อ่าน+บันทึก
                 </button>
               )}
               <button type="button" onClick={addValue} className="btn-primary px-4">
