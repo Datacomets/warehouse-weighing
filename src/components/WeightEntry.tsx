@@ -6,6 +6,7 @@ import { stats, fmt } from "@/lib/stats";
 import { StatsCard } from "./StatsCard";
 import { Icon } from "./Icon";
 import { clsx } from "clsx";
+import { useScale } from "@/lib/useScale";
 
 type WeightUnit = "kg" | "g" | "pcs";
 
@@ -45,6 +46,11 @@ export function WeightEntry({
   const [draft, setDraft] = useState<string>("");
   const [unit, setUnit] = useState<WeightUnit>(initialUnit);
   const [, startTransition] = useTransition();
+  const scale = useScale({
+    onReading: (value) => {
+      setDraft(String(value));
+    },
+  });
 
   const values = items.map((i) => Number(i.value));
   const s = stats(values);
@@ -237,27 +243,78 @@ export function WeightEntry({
         </div>
 
         {!readOnly && (
-          <div className="flex gap-2 mt-3">
-            <input
-              type="number"
-              inputMode="decimal"
-              step={unit === "pcs" ? "1" : "0.001"}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addValue();
-                }
-              }}
-              className="input-base flex-1"
-              placeholder={unit === "pcs" ? "จำนวนชิ้น" : `0.000 ${unitLabel}`}
-            />
-            <button type="button" onClick={addValue} className="btn-primary px-4">
-              <Icon name="add" />
-              เพิ่ม
-            </button>
-          </div>
+          <>
+            {/* เชื่อมต่อเครื่องชั่ง */}
+            {scale.isSupported && unit !== "pcs" && (
+              <div className="flex items-center gap-2 mt-2 mb-1">
+                {scale.status === "disconnected" || scale.status === "error" ? (
+                  <button
+                    type="button"
+                    onClick={scale.connect}
+                    className="btn-secondary h-9 px-3 text-xs"
+                  >
+                    <Icon name="usb" className="text-base" />
+                    เชื่อมต่อเครื่องชั่ง
+                  </button>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-success">
+                    <Icon name="check_circle" className="text-sm" />
+                    เชื่อมต่อเครื่องชั่งแล้ว
+                  </span>
+                )}
+                {scale.status === "connected" && (
+                  <button
+                    type="button"
+                    onClick={scale.disconnect}
+                    className="text-xs text-outline hover:text-error"
+                  >
+                    ยกเลิก
+                  </button>
+                )}
+                {scale.error && (
+                  <span className="text-xs text-error">{scale.error}</span>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-2">
+              <input
+                type="number"
+                inputMode="decimal"
+                step={unit === "pcs" ? "1" : "0.001"}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addValue();
+                  }
+                }}
+                className="input-base flex-1"
+                placeholder={unit === "pcs" ? "จำนวนชิ้น" : `0.000 ${unitLabel}`}
+              />
+              {scale.status === "connected" && unit !== "pcs" && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const val = await scale.readOnce();
+                    if (val !== null) {
+                      setDraft(String(val));
+                    }
+                  }}
+                  disabled={scale.status === ("reading" as any)}
+                  className="btn-secondary px-3"
+                  title="อ่านค่าจากเครื่องชั่ง"
+                >
+                  <Icon name="scale" />
+                </button>
+              )}
+              <button type="button" onClick={addValue} className="btn-primary px-4">
+                <Icon name="add" />
+                เพิ่ม
+              </button>
+            </div>
+          </>
         )}
       </div>
 
