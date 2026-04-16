@@ -1,16 +1,16 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { parseWeight } from "./scaleParser";
 
 /**
  * Web Serial API hook for reading weight from digital scales.
  *
- * Supported protocols (auto-detect):
- * - Generic ASCII: lines like "ST,GS,  0.450 kg\r\n"
- * - A&D: "ST,+  0.4500  g\r\n"
- * - Ohaus: "   0.450 kg\r\n"
- * - Mettler Toledo: "S S     0.450 kg\r\n"
+ * Parser lives in `./scaleParser.ts` (see there for protocol details).
  *
- * Extracts the first numeric value from each line.
+ * First-time UX: user clicks "เชื่อมต่อ" → browser picker → permission granted.
+ * Subsequent mounts (e.g. navigating between per-pcs/per-inner/per-carton)
+ * auto-reconnect silently via `navigator.serial.getPorts()` — the browser
+ * remembers the granted port for this origin.
  */
 
 export type ScaleStatus = "disconnected" | "connecting" | "connected" | "reading" | "error";
@@ -32,22 +32,45 @@ export function useScale(options: UseScaleOptions = {}) {
 
   const isSupported = typeof navigator !== "undefined" && "serial" in navigator;
 
-  /** Parse weight value from raw scale output */
-  function parseWeight(raw: string): number | null {
-    // Remove control characters and trim
-    const cleaned = raw.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F]/g, "").trim();
-    if (!cleaned) return null;
+  /**
+   * On mount, try to silently reconnect to a previously-authorized port.
+   * `navigator.serial.getPorts()` returns ports the user has granted
+   * permission for on this origin — no picker dialog shown.
+   *
+   * This fires on every component mount (e.g. each weighing step page), so
+   * the user only has to click "เชื่อมต่อ" once per browser session.
+   */
+  useEffect(() => {
+    if (!isSupported) return;
 
-    // Extract number pattern: optional sign, digits, optional decimal
-    const match = cleaned.match(/[+-]?\s*\d+\.?\d*/);
-    if (!match) return null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const ports: any[] = await (navigator as any).serial.getPorts();
+        if (cancelled || ports.length === 0) return;
 
-    const val = parseFloat(match[0].replace(/\s/g, ""));
-    if (!Number.isFinite(val)) return null;
-    if (val <= 0) return null; // skip zero/negative (scale not stable)
+        const port = ports[0];
+        if (!port.readable && !port.writable) {
+          // Port is closed — open it. If already open (e.g. another mount
+          // of the same hook kept it alive), just use it as-is.
+          setStatus("connecting");
+          await port.open({ baudRate });
+        }
+        if (cancelled) return;
+        portRef.current = port;
+        setStatus("connected");
+      } catch {
+        // Silent fail — user can still click "เชื่อมต่อ" manually
+        if (!cancelled) setStatus("disconnected");
+      }
+    })();
 
-    return val;
-  }
+    return () => {
+      cancelled = true;
+    };
+    // baudRate intentionally excluded — changing it shouldn't force a reconnect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSupported]);
 
   /** Connect to scale and start reading */
   const connect = useCallback(async () => {
