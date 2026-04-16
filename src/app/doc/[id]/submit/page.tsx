@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitPanel } from "./SubmitPanel";
 import { SectionHeader } from "@/components/Field";
 import { fmtDateTime, leadTimeText } from "@/lib/stats";
+import { computeSubmitChecklist } from "@/lib/submitChecklist";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 
@@ -24,12 +25,11 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     .select("*", { count: "exact", head: true })
     .eq("document_id", params.id);
 
-  const kinds = new Set((items || []).map((i: any) => i.kind));
-  const hasPcs = kinds.has("per_pcs");
-  const hasInner = kinds.has("per_inner");
-  const hasCarton = (gridCount || 0) > 0;
-  const hasRemainder = hasCarton && (doc.remainder_pcs != null);
-  const hasAll = hasPcs && hasInner && hasCarton && hasRemainder;
+  const { hasPcs, hasInner, hasCarton, hasRemainder, hasAll } = computeSubmitChecklist({
+    measurementKinds: (items || []).map((i: any) => i.kind),
+    gridCount: gridCount || 0,
+    remainderPcs: doc.remainder_pcs,
+  });
 
   const qtyPerCarton = Number(doc.qty_per_carton) || 0;
   const fullCartons = gridCount || 0;

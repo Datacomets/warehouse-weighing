@@ -7,6 +7,12 @@ import { Icon } from "@/components/Icon";
 import Link from "next/link";
 import { HomeFilters } from "./HomeFilters";
 import { logger } from "@/lib/logger";
+import { seesOnlyOwnDocuments } from "@/lib/permissions";
+import {
+  parseHomeTab,
+  normalizeSearchQuery,
+  homeSearchOrExpression,
+} from "@/lib/homeSearch";
 
 export default async function HomePage({
   searchParams,
@@ -16,11 +22,10 @@ export default async function HomePage({
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
 
-  const tab = searchParams.tab === "completed" ? "completed" : "in_progress";
-  const q = (searchParams.q || "").trim();
+  const tab = parseHomeTab(searchParams.tab);
+  const q = normalizeSearchQuery(searchParams.q);
 
-  // operator เห็นเฉพาะงานของตัวเอง role อื่นเห็นทุกคน
-  const onlyMine = profile.role === "operator";
+  const onlyMine = seesOnlyOwnDocuments(profile.role);
 
   const supabase = createClient();
   let query = supabase.from("gr_documents").select("*").order("created_at", { ascending: false });
@@ -33,12 +38,9 @@ export default async function HomePage({
   } else {
     query = query.in("status", ["in_progress", "pending_sap"]);
   }
-  if (q) {
-    // escape SQL LIKE wildcards
-    const escaped = q.replace(/[%_\\]/g, "\\$&");
-    query = query.or(
-      `wh_number.ilike.%${escaped}%,lot.ilike.%${escaped}%,item_code.ilike.%${escaped}%,description.ilike.%${escaped}%`
-    );
+  const orExpr = homeSearchOrExpression(q);
+  if (orExpr) {
+    query = query.or(orExpr);
   }
   const { data: docs, error } = await query;
   if (error) logger.error("Home page query error", { error: error.message });

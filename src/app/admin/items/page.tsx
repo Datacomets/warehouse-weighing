@@ -3,13 +3,14 @@ import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { ItemsAdmin } from "./ItemsAdmin";
+import { canAccessItemMaster } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function ItemsMasterPage() {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (!["admin", "admin_sap"].includes(profile.role)) redirect("/home");
+  if (!canAccessItemMaster(profile.role)) redirect("/home");
 
   const supabase = createClient();
   const { data: items } = await supabase

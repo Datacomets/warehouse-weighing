@@ -3,6 +3,7 @@ import { useEffect, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { WeightKind, WeightMeasurement } from "@/lib/types";
 import { stats, fmt } from "@/lib/stats";
+import { isOutlier } from "@/lib/outlier";
 import { StatsCard } from "./StatsCard";
 import { Icon } from "./Icon";
 import { clsx } from "clsx";
@@ -56,13 +57,6 @@ export function WeightEntry({
   const s = stats(values);
 
   const unitLabel = UNITS.find((u) => u.value === unit)?.label || "kg";
-
-  function isOutlier(v: number) {
-    if (s.count < 3) return false;
-    const range = s.max - s.min;
-    if (range === 0) return false;
-    return Math.abs(v - s.avg) > range * 0.45;
-  }
 
   function changeUnit(newUnit: WeightUnit) {
     setUnit(newUnit);
@@ -229,7 +223,7 @@ export function WeightEntry({
         <div className="flex flex-col gap-2">
           {items.map((m, i) => {
             const v = Number(m.value);
-            const out = isOutlier(v);
+            const out = isOutlier(v, s);
             return (
               <div
                 key={m.id}

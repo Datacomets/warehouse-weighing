@@ -1,6 +1,7 @@
 "use client";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
+import { countGridStats, reorganizeGridToRows } from "@/lib/documentSummary";
 
 const styles = StyleSheet.create({
   page: { padding: 28, fontSize: 10, fontFamily: "Helvetica", color: "#191c1d" },
@@ -91,16 +92,8 @@ export function WeightSheetPdf({ doc, perPcs, perInner, perCarton }: any) {
 }
 
 export function CountSheetPdf({ doc, grid }: any) {
-  // Reorganize grid by row
-  const rows: number[][] = [];
-  grid.forEach((g: any) => {
-    if (!rows[g.row_index]) rows[g.row_index] = [];
-    rows[g.row_index][g.col_index] = Number(g.value);
-  });
-  const all = grid.map((g: any) => Number(g.value)).filter((n: number) => Number.isFinite(n));
-  const avg = all.length ? all.reduce((a: number, b: number) => a + b, 0) / all.length : 0;
-  const min = all.length ? Math.min(...all) : 0;
-  const max = all.length ? Math.max(...all) : 0;
+  const rows = reorganizeGridToRows(grid);
+  const { avg, min, max, count } = countGridStats(grid);
 
   return (
     <Document>
@@ -155,7 +148,7 @@ export function CountSheetPdf({ doc, grid }: any) {
             <Text style={styles.td}>{fmt(avg)}</Text>
             <Text style={styles.td}>{fmt(min)}</Text>
             <Text style={styles.td}>{fmt(max)}</Text>
-            <Text style={styles.td}>{all.length}</Text>
+            <Text style={styles.td}>{count}</Text>
           </View>
         </View>
 

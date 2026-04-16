@@ -8,6 +8,7 @@ import { Icon } from "@/components/Icon";
 import { clsx } from "clsx";
 import { startOfDayTH, endOfDayTH } from "@/lib/dateUtils";
 import { logger } from "@/lib/logger";
+import { canAccessAdminQueue } from "@/lib/permissions";
 
 type Tab = "pending" | "working" | "done_today" | "all";
 
@@ -18,7 +19,7 @@ export default async function AdminPage({
 }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (!["admin_sap", "admin", "qc"].includes(profile.role)) redirect("/home");
+  if (!canAccessAdminQueue(profile.role)) redirect("/home");
 
   const tab: Tab =
     searchParams.tab === "working"

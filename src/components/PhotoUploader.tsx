@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "./Icon";
 import type { WeightKind } from "@/lib/types";
+import { uploadWeightPhoto, deleteWeightPhoto } from "@/lib/photoUpload";
 
 interface Photo {
   id: string;
@@ -24,47 +25,29 @@ export function PhotoUploader({
   const [photos, setPhotos] = useState<Photo[]>(initial);
   const [uploading, setUploading] = useState(false);
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
 
     for (const file of Array.from(files)) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        alert(`ไฟล์ "${file.name}" ไม่ใช่รูปภาพที่รองรับ (JPEG, PNG, WEBP)`);
+      const result = await uploadWeightPhoto(supabase, { documentId, kind, file });
+      if (!result.ok) {
+        alert(result.error);
         continue;
       }
-      if (file.size > MAX_FILE_SIZE) {
-        alert(`ไฟล์ "${file.name}" ใหญ่เกิน 10 MB`);
-        continue;
-      }
-      const path = `${documentId}/${kind || "general"}/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage.from("gr-photos").upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-      if (error) {
-        alert("Upload failed: " + error.message);
-        continue;
-      }
-      const { data: pub } = supabase.storage.from("gr-photos").getPublicUrl(data.path);
-      const url = pub.publicUrl;
-      const { data: row, error: err2 } = await supabase
-        .from("weight_photos")
-        .insert({ document_id: documentId, kind, url })
-        .select("id,url")
-        .single();
-      if (!err2 && row) setPhotos((p) => [...p, row as Photo]);
+      setPhotos((p) => [...p, result.data]);
     }
     setUploading(false);
     e.target.value = "";
   }
 
   async function remove(p: Photo) {
-    await supabase.from("weight_photos").delete().eq("id", p.id);
+    const result = await deleteWeightPhoto(supabase, p.id);
+    if (!result.ok) {
+      alert(result.error);
+      return;
+    }
     setPhotos(photos.filter((x) => x.id !== p.id));
   }
 

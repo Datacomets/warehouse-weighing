@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { stats, fmt } from "@/lib/stats";
+import { isOutlier } from "@/lib/outlier";
 import { Icon } from "@/components/Icon";
 import { StatsCard } from "@/components/StatsCard";
 import { clsx } from "clsx";
@@ -40,13 +41,6 @@ export function CountGrid({
 
   const s = stats(values);
   const counted = values.length;
-
-  function isOutlier(v: number) {
-    if (s.count < 3 || !Number.isFinite(v) || v <= 0) return false;
-    const range = s.max - s.min;
-    if (range === 0) return false;
-    return Math.abs(v - s.avg) > range * 0.45;
-  }
 
   async function persist(r: number, c: number, v: string) {
     const num = Number(v);
@@ -95,11 +89,11 @@ export function CountGrid({
                   onBlur={() => persist(r, c, cells[k] || "")}
                   className={clsx(
                     "w-16 h-10 text-center text-sm rounded focus:outline-none focus:ring-2",
-                    cells[k] && isOutlier(Number(cells[k]))
+                    cells[k] && isOutlier(Number(cells[k]), s)
                       ? "border-2 border-error bg-error-container/30 text-error focus:ring-error"
                       : "border border-outline-variant/40 bg-surface-container-low focus:ring-primary"
                   )}
-                  title={cells[k] && isOutlier(Number(cells[k])) ? "ค่าผิดปกติ" : undefined}
+                  title={cells[k] && isOutlier(Number(cells[k]), s) ? "ค่าผิดปกติ" : undefined}
                   placeholder={String(cartonNo)}
                 />
               </div>

@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { DocumentCard } from "@/components/DocumentCard";
 import { Icon } from "@/components/Icon";
 import { startOfDayTH } from "@/lib/dateUtils";
+import { canAccessTeam } from "@/lib/permissions";
 
 type Tab = "in_progress" | "pending" | "completed" | "all";
 
@@ -19,7 +20,7 @@ export default async function TeamUserPage({
 }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (!["qc", "manager", "admin"].includes(profile.role)) redirect("/home");
+  if (!canAccessTeam(profile.role)) redirect("/home");
 
   const tab: Tab =
     searchParams.tab === "pending"

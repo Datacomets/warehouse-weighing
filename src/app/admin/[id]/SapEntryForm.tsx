@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Field } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { Toast, useToast } from "@/components/Toast";
+import { completeSapEntry } from "@/lib/docActions";
 
 export function SapEntryForm({ doc, userId }: { doc: any; userId: string }) {
   const router = useRouter();
@@ -17,66 +18,22 @@ export function SapEntryForm({ doc, userId }: { doc: any; userId: string }) {
   const toast = useToast();
 
   async function save() {
-    if (!cfsd.trim()) {
-      setErr("กรุณากรอกเลข CFSD");
-      return;
-    }
     setLoading(true);
     setErr(null);
 
-    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
-    const ALLOWED_TYPES = [
-      "image/jpeg", "image/png", "image/webp",
-      "application/pdf",
-    ];
+    const result = await completeSapEntry(supabase, {
+      doc: { id: doc.id, sap_attachment_url: doc.sap_attachment_url },
+      cfsd,
+      notif,
+      file,
+      userId,
+    });
 
-    let attachmentUrl: string | null = doc.sap_attachment_url;
-    if (file) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        setErr("ไฟล์ต้องเป็น PDF หรือรูปภาพ (JPEG, PNG, WEBP) เท่านั้น");
-        setLoading(false);
-        return;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        setErr("ไฟล์ใหญ่เกิน 20 MB");
-        setLoading(false);
-        return;
-      }
-      const path = `${doc.id}/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage.from("sap-attachments").upload(path, file);
-      if (error) {
-        setErr("Upload failed: " + error.message);
-        setLoading(false);
-        return;
-      }
-      const { data: pub } = supabase.storage.from("sap-attachments").getPublicUrl(data.path);
-      attachmentUrl = pub.publicUrl;
-    }
-
-    const { error } = await supabase
-      .from("gr_documents")
-      .update({
-        sap_inbound_id: cfsd.trim(),
-        sap_notification_id: notif.trim() || null,
-        sap_attachment_url: attachmentUrl,
-        status: "completed",
-        closed_by: userId,
-        closed_at: new Date().toISOString(),
-      })
-      .eq("id", doc.id);
-
-    if (error) {
-      setErr(error.message);
+    if (!result.ok) {
+      setErr(result.error);
       setLoading(false);
       return;
     }
-
-    await supabase.from("audit_log").insert({
-      document_id: doc.id,
-      actor: userId,
-      action: "complete_sap",
-      detail: { sap_inbound_id: cfsd },
-    });
 
     setLoading(false);
     toast.show("นำเข้า SAP สำเร็จ!");

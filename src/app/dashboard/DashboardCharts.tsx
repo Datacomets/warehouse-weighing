@@ -11,7 +11,7 @@ import {
   ReferenceLine,
   CartesianGrid,
 } from "recharts";
-import { leadTimeMinutes } from "@/lib/stats";
+import { supplierChartData, dailyLeadTimeAverages } from "@/lib/dashboardStats";
 
 interface Doc {
   id: string;
@@ -33,27 +33,8 @@ export function DashboardCharts({
   docs: Doc[];
   kpi: number;
 }) {
-  const supplierData = Object.entries(bySupplier)
-    .map(([name, weight]) => ({ name: name.length > 14 ? name.slice(0, 14) + "…" : name, weight }))
-    .sort((a, b) => b.weight - a.weight)
-    .slice(0, 8);
-
-  // group by day for lead time
-  const byDay: Record<string, number[]> = {};
-  docs.forEach((d) => {
-    if (d.status === "completed" && d.closed_at) {
-      const day = d.created_at.slice(0, 10);
-      const lt = leadTimeMinutes(d.started_at, d.closed_at);
-      (byDay[day] = byDay[day] || []).push(lt);
-    }
-  });
-  const dailyData = Object.entries(byDay)
-    .sort()
-    .slice(-14)
-    .map(([day, arr]) => ({
-      day: day.slice(5),
-      avg: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length),
-    }));
+  const supplierData = supplierChartData(bySupplier);
+  const dailyData = dailyLeadTimeAverages(docs);
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">

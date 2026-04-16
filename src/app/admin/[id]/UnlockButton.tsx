@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
+import { unlockDocument } from "@/lib/docActions";
 
 export function UnlockButton({ docId }: { docId: string }) {
   const router = useRouter();
@@ -18,26 +19,16 @@ export function UnlockButton({ docId }: { docId: string }) {
     setLoading(true);
     setErr(null);
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from("gr_documents")
-      .update({
-        status: "in_progress",
-        unlock_reason: reason,
-        submitted_at: null,
-        ended_at: null,
-      })
-      .eq("id", docId);
-    if (error) {
-      setErr(error.message);
+    const result = await unlockDocument(supabase, {
+      docId,
+      userId: user?.id ?? null,
+      reason,
+    });
+    if (!result.ok) {
+      setErr(result.error);
       setLoading(false);
       return;
     }
-    await supabase.from("audit_log").insert({
-      document_id: docId,
-      actor: user?.id,
-      action: "unlock",
-      detail: { reason },
-    });
     setLoading(false);
     router.push("/admin");
     router.refresh();

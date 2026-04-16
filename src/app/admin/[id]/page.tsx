@@ -8,12 +8,13 @@ import { fmt, fmtDate, fmtDateTime, leadTimeText, stats } from "@/lib/stats";
 import { SapEntryForm } from "./SapEntryForm";
 import { UnlockButton } from "./UnlockButton";
 import { ISSUE_TYPES } from "@/lib/mock-erp";
+import { canAccessAdminQueue } from "@/lib/permissions";
 import { clsx } from "clsx";
 
 export default async function AdminDocPage({ params }: { params: { id: string } }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (!["admin_sap", "admin", "qc"].includes(profile.role)) redirect("/home");
+  if (!canAccessAdminQueue(profile.role)) redirect("/home");
 
   const supabase = createClient();
   const [

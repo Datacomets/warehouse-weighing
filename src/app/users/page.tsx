@@ -5,11 +5,12 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Icon } from "@/components/Icon";
 import { UsersAdmin } from "./UsersAdmin";
+import { canManageUsers } from "@/lib/permissions";
 
 export default async function UsersPage() {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (profile.role !== "admin") redirect("/home");
+  if (!canManageUsers(profile.role)) redirect("/home");
 
   const supabase = createClient();
   const { data: users } = await supabase

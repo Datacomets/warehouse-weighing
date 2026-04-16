@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import { validateRemainder } from "@/lib/validation";
 import { StepButtons } from "@/components/StepButtons";
 import { Toast, useToast } from "@/components/Toast";
 
@@ -32,17 +33,13 @@ export function RemainderForm({
   async function save() {
     setSaving(true);
     setErr(null);
+    const validationError = validateRemainder(remainderPcs);
+    if (validationError) {
+      setErr(validationError);
+      setSaving(false);
+      return;
+    }
     const val = remainderPcs === "" ? null : Number(remainderPcs);
-    if (val !== null && val < 0) {
-      setErr("จำนวนเศษต้องไม่ติดลบ");
-      setSaving(false);
-      return;
-    }
-    if (val !== null && !Number.isInteger(val)) {
-      setErr("จำนวนเศษต้องเป็นจำนวนเต็ม");
-      setSaving(false);
-      return;
-    }
     const { error } = await supabase
       .from("gr_documents")
       .update({

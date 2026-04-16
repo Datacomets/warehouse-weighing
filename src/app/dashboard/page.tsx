@@ -4,10 +4,16 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { DashboardCharts } from "./DashboardCharts";
 import { Icon } from "@/components/Icon";
-import { leadTimeMinutes } from "@/lib/stats";
 import { logger } from "@/lib/logger";
+import {
+  DEFAULT_KPI_LEAD_TIME_MINUTES,
+  totalGrossWeight,
+  todaysDocs,
+  leadTimeSummary,
+  groupGrossBySupplier,
+} from "@/lib/dashboardStats";
 
-const KPI_LEAD_TIME_MINUTES = 120; // 2 ชม. — สามารถเปลี่ยนได้ใน Settings
+const KPI_LEAD_TIME_MINUTES = DEFAULT_KPI_LEAD_TIME_MINUTES;
 
 export default async function DashboardPage() {
   const { profile } = await getCurrentUserAndProfile();
@@ -25,26 +31,14 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const todayDocs = (docs || []).filter(
-    (d: any) => new Date(d.created_at) >= today
+  const allDocs = docs || [];
+  const todayDocs = todaysDocs(allDocs, today);
+  const totalGross = totalGrossWeight(allDocs);
+  const { avgMinutes: avgLead, countOverKpi: overKpi } = leadTimeSummary(
+    allDocs,
+    KPI_LEAD_TIME_MINUTES
   );
-  const totalGross = (docs || []).reduce(
-    (s: number, d: any) => s + (Number(d.gross_weight) || 0) * (Number(d.actual_count) || 0),
-    0
-  );
-  const completed = (docs || []).filter((d: any) => d.status === "completed");
-  const leadTimes = completed
-    .filter((d: any) => d.started_at && d.closed_at)
-    .map((d: any) => leadTimeMinutes(d.started_at, d.closed_at));
-  const avgLead = leadTimes.length ? Math.round(leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length) : 0;
-  const overKpi = leadTimes.filter((m) => m > KPI_LEAD_TIME_MINUTES).length;
-
-  // group by supplier
-  const bySupplier: Record<string, number> = {};
-  (docs || []).forEach((d: any) => {
-    const k = d.supplier || "ไม่ระบุ";
-    bySupplier[k] = (bySupplier[k] || 0) + (Number(d.gross_weight) || 0) * (Number(d.actual_count) || 0);
-  });
+  const bySupplier = groupGrossBySupplier(allDocs);
 
   return (
     <>

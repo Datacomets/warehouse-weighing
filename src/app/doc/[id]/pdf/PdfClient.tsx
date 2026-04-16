@@ -1,7 +1,13 @@
 "use client";
 import dynamic from "next/dynamic";
 import { Icon } from "@/components/Icon";
-import { stats, fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
+import { fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
+import {
+  weightStatsByKind,
+  countGridStats,
+  totalPiecesCount,
+  weightUnitLabel,
+} from "@/lib/documentSummary";
 
 // Dynamic import — @react-pdf/renderer is heavy and client-only.
 // Importing the whole button wrapper (which pulls in pdfDocs + react-pdf)
@@ -33,15 +39,17 @@ export function PdfClient({
   items: any[];
   grid: any[];
 }) {
-  const perPcs = stats(items.filter((i) => i.kind === "per_pcs").map((i) => Number(i.value)));
-  const perInner = stats(items.filter((i) => i.kind === "per_inner").map((i) => Number(i.value)));
-  const perCarton = stats(grid.map((g: any) => Number(g.value)));
+  const perPcs = weightStatsByKind(items, "per_pcs");
+  const perInner = weightStatsByKind(items, "per_inner");
+  const perCarton = countGridStats(grid);
   const cartonCount = grid.length;
-  const unit = doc.weight_unit || "kg";
-  const unitLabel = unit === "g" ? "g" : unit === "pcs" ? "ชิ้น" : "kg";
+  const unitLabel = weightUnitLabel(doc.weight_unit);
   const remainderPcs = Number(doc.remainder_pcs) || 0;
-  const qtyPerCarton = Number(doc.qty_per_carton) || 0;
-  const totalPcs = qtyPerCarton * cartonCount + remainderPcs;
+  const totalPcs = totalPiecesCount({
+    qtyPerCarton: doc.qty_per_carton,
+    cartonCount,
+    remainderPcs,
+  });
 
   return (
     <div className="flex flex-col gap-4">

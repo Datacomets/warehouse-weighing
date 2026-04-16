@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { Field } from "@/components/Field";
 import { ISSUE_TYPES, DEFECT_CODES } from "@/lib/mock-erp";
 import { fmtDateTime } from "@/lib/stats";
+import { createIssue, deleteIssue, uploadIssuePhoto } from "@/lib/issueActions";
 import { clsx } from "clsx";
 
 export function IssuesPanel({
@@ -33,37 +34,27 @@ export function IssuesPanel({
 
   async function uploadPhoto(file: File) {
     setUploading(true);
-    const path = `${documentId}/issues/${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage.from("gr-photos").upload(path, file);
-    if (error) {
-      alert(error.message);
-      setUploading(false);
+    const result = await uploadIssuePhoto(supabase, { documentId, file });
+    setUploading(false);
+    if (!result.ok) {
+      alert(result.error);
       return;
     }
-    const { data: pub } = supabase.storage.from("gr-photos").getPublicUrl(data.path);
-    setPhotoUrls((p) => [...p, pub.publicUrl]);
-    setUploading(false);
+    setPhotoUrls((p) => [...p, result.data]);
   }
 
   async function save() {
-    const { data, error } = await supabase
-      .from("issue_reports")
-      .insert({
-        document_id: documentId,
-        issue_type: draft.issue_type,
-        defect_code: draft.defect_code || null,
-        quantity: draft.quantity ? Number(draft.quantity) : null,
-        notes: draft.notes || null,
-        photos: photoUrls,
-        created_by: userId,
-      })
-      .select("*")
-      .single();
-    if (error) {
-      alert(error.message);
+    const result = await createIssue(supabase, {
+      documentId,
+      userId,
+      draft,
+      photoUrls,
+    });
+    if (!result.ok) {
+      alert(result.error);
       return;
     }
-    setIssues([data, ...issues]);
+    setIssues([result.data, ...issues]);
     setOpen(false);
     setDraft({ issue_type: "damaged", defect_code: "", quantity: "", notes: "" });
     setPhotoUrls([]);
@@ -71,7 +62,11 @@ export function IssuesPanel({
 
   async function remove(id: string) {
     if (!confirm("ต้องการลบรายการปัญหานี้หรือไม่?")) return;
-    await supabase.from("issue_reports").delete().eq("id", id);
+    const result = await deleteIssue(supabase, id);
+    if (!result.ok) {
+      alert(result.error);
+      return;
+    }
     setIssues(issues.filter((i) => i.id !== id));
   }
 

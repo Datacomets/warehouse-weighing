@@ -5,11 +5,13 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Icon } from "@/components/Icon";
 import { startOfDayTH } from "@/lib/dateUtils";
+import { canAccessTeam } from "@/lib/permissions";
+import { countDocsByUser, buildOperatorRows, teamTotals } from "@/lib/teamStats";
 
 export default async function TeamPage() {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (!["qc", "manager", "admin"].includes(profile.role)) redirect("/home");
+  if (!canAccessTeam(profile.role)) redirect("/home");
 
   const supabase = createClient();
 
@@ -26,45 +28,9 @@ export default async function TeamPage() {
       .in("status", ["in_progress", "pending_sap", "completed"]),
   ]);
 
-  const startOfDay = startOfDayTH();
-
-  type Counts = {
-    inProgress: number;
-    pending: number;
-    completedToday: number;
-    completedTotal: number;
-  };
-  const byUser = new Map<string, Counts>();
-  (docs || []).forEach((d: any) => {
-    if (!d.created_by) return;
-    const c =
-      byUser.get(d.created_by) ||
-      ({ inProgress: 0, pending: 0, completedToday: 0, completedTotal: 0 } as Counts);
-    if (d.status === "in_progress") c.inProgress++;
-    else if (d.status === "pending_sap") c.pending++;
-    else if (d.status === "completed") {
-      c.completedTotal++;
-      if (d.closed_at && new Date(d.closed_at) >= startOfDay) c.completedToday++;
-    }
-    byUser.set(d.created_by, c);
-  });
-
-  const rows = (operators || []).map((u: any) => ({
-    user: u,
-    counts:
-      byUser.get(u.id) ||
-      ({ inProgress: 0, pending: 0, completedToday: 0, completedTotal: 0 } as Counts),
-  }));
-
-  rows.sort((a, b) => {
-    if (b.counts.inProgress !== a.counts.inProgress)
-      return b.counts.inProgress - a.counts.inProgress;
-    return b.counts.pending - a.counts.pending;
-  });
-
-  const totalInProgress = rows.reduce((s, r) => s + r.counts.inProgress, 0);
-  const totalPending = rows.reduce((s, r) => s + r.counts.pending, 0);
-  const totalCompletedToday = rows.reduce((s, r) => s + r.counts.completedToday, 0);
+  const byUser = countDocsByUser(docs || [], startOfDayTH());
+  const rows = buildOperatorRows(operators || [], byUser);
+  const { totalInProgress, totalPending, totalCompletedToday } = teamTotals(rows);
 
   return (
     <>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { Toast, useToast } from "@/components/Toast";
+import { submitDocument } from "@/lib/docActions";
 
 export function SubmitPanel({
   docId,
@@ -25,25 +26,12 @@ export function SubmitPanel({
     setLoading(true);
     setErr(null);
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from("gr_documents")
-      .update({
-        status: "pending_sap",
-        submitted_by: user?.id,
-        submitted_at: new Date().toISOString(),
-        ended_at: new Date().toISOString(),
-      })
-      .eq("id", docId);
-    if (error) {
-      setErr(error.message);
+    const result = await submitDocument(supabase, { docId, userId: user?.id ?? null });
+    if (!result.ok) {
+      setErr(result.error);
       setLoading(false);
       return;
     }
-    await supabase.from("audit_log").insert({
-      document_id: docId,
-      actor: user?.id,
-      action: "submit_work",
-    });
     setLoading(false);
     toast.show("ส่งงานสำเร็จ!");
     setTimeout(() => {
