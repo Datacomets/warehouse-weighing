@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "./Icon";
+import { Toast, useToast } from "./Toast";
 import type { WeightKind } from "@/lib/types";
 import { uploadWeightPhoto, deleteWeightPhoto } from "@/lib/photoUpload";
 
@@ -24,6 +25,7 @@ export function PhotoUploader({
   const supabase = createClient();
   const [photos, setPhotos] = useState<Photo[]>(initial);
   const [uploading, setUploading] = useState(false);
+  const toast = useToast();
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -33,7 +35,7 @@ export function PhotoUploader({
     for (const file of Array.from(files)) {
       const result = await uploadWeightPhoto(supabase, { documentId, kind, file });
       if (!result.ok) {
-        alert(result.error);
+        toast.error(result.error);
         continue;
       }
       setPhotos((p) => [...p, result.data]);
@@ -45,7 +47,7 @@ export function PhotoUploader({
   async function remove(p: Photo) {
     const result = await deleteWeightPhoto(supabase, p.id);
     if (!result.ok) {
-      alert(result.error);
+      toast.error(result.error);
       return;
     }
     setPhotos(photos.filter((x) => x.id !== p.id));
@@ -53,24 +55,29 @@ export function PhotoUploader({
 
   return (
     <div className="card">
+      <Toast message={toast.msg} variant={toast.variant} />
       <div className="flex items-center justify-between mb-2">
         <span className="section-title">รูปภาพประกอบ</span>
         {!readOnly && (
-          <label className="btn-secondary h-9 px-3 text-xs cursor-pointer">
+          <label
+            className={`btn-secondary h-11 px-4 text-xs cursor-pointer ${
+              uploading ? "opacity-50 pointer-events-none" : ""
+            }`}
+          >
             <Icon name="photo_camera" className="text-base" />
-            ถ่ายรูป / เลือกรูป
+            {uploading ? "กำลังอัปโหลด..." : "ถ่ายรูป / เลือกรูป"}
             <input
               type="file"
               accept="image/*"
               capture="environment"
               multiple
               hidden
+              disabled={uploading}
               onChange={onPick}
             />
           </label>
         )}
       </div>
-      {uploading && <p className="text-xs text-outline">กำลังอัปโหลด...</p>}
       <div className="grid grid-cols-3 gap-2 mt-2">
         {photos.map((p) => (
           <div key={p.id} className="relative aspect-square rounded-lg overflow-hidden bg-surface-container">
@@ -80,9 +87,10 @@ export function PhotoUploader({
               <button
                 type="button"
                 onClick={() => remove(p)}
-                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-error text-white flex items-center justify-center"
+                aria-label="ลบรูปภาพ"
+                className="absolute top-1 right-1 w-10 h-10 rounded-full bg-error/90 hover:bg-error text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
               >
-                <Icon name="close" className="text-xs" />
+                <Icon name="close" className="text-base" />
               </button>
             )}
           </div>

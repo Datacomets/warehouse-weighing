@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { Field } from "@/components/Field";
+import { Toast, useToast } from "@/components/Toast";
 import { ISSUE_TYPES, DEFECT_CODES } from "@/lib/mock-erp";
 import { fmtDateTime } from "@/lib/stats";
 import { createIssue, deleteIssue, uploadIssuePhoto } from "@/lib/issueActions";
@@ -31,27 +32,31 @@ export function IssuesPanel({
   });
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   async function uploadPhoto(file: File) {
     setUploading(true);
     const result = await uploadIssuePhoto(supabase, { documentId, file });
     setUploading(false);
     if (!result.ok) {
-      alert(result.error);
+      toast.error(result.error);
       return;
     }
     setPhotoUrls((p) => [...p, result.data]);
   }
 
   async function save() {
+    setSaving(true);
     const result = await createIssue(supabase, {
       documentId,
       userId,
       draft,
       photoUrls,
     });
+    setSaving(false);
     if (!result.ok) {
-      alert(result.error);
+      toast.error(result.error);
       return;
     }
     setIssues([result.data, ...issues]);
@@ -64,7 +69,7 @@ export function IssuesPanel({
     if (!confirm("ต้องการลบรายการปัญหานี้หรือไม่?")) return;
     const result = await deleteIssue(supabase, id);
     if (!result.ok) {
-      alert(result.error);
+      toast.error(result.error);
       return;
     }
     setIssues(issues.filter((i) => i.id !== id));
@@ -72,6 +77,7 @@ export function IssuesPanel({
 
   return (
     <div className="flex flex-col gap-4">
+      <Toast message={toast.msg} variant={toast.variant} />
       {!readOnly && !open && (
         <button onClick={() => setOpen(true)} className="btn-primary self-start">
           <Icon name="add_alert" filled />
@@ -132,18 +138,22 @@ export function IssuesPanel({
           </Field>
 
           <div>
-            <label className="btn-secondary h-10 px-4 text-xs cursor-pointer self-start inline-flex">
+            <label
+              className={`btn-secondary h-11 px-4 text-xs cursor-pointer self-start inline-flex ${
+                uploading ? "opacity-50 pointer-events-none" : ""
+              }`}
+            >
               <Icon name="photo_camera" className="text-base" />
-              ถ่ายรูป
+              {uploading ? "กำลังอัปโหลด..." : "ถ่ายรูป"}
               <input
                 type="file"
                 accept="image/*"
                 capture="environment"
                 hidden
+                disabled={uploading}
                 onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])}
               />
             </label>
-            {uploading && <span className="text-xs text-outline ml-2">กำลังอัปโหลด...</span>}
             <div className="grid grid-cols-3 gap-2 mt-2">
               {photoUrls.map((u, i) => (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -158,11 +168,15 @@ export function IssuesPanel({
           </div>
 
           <div className="flex gap-2 mt-2">
-            <button onClick={() => setOpen(false)} className="btn-secondary flex-1">
+            <button
+              onClick={() => setOpen(false)}
+              disabled={saving}
+              className="btn-secondary flex-1"
+            >
               ยกเลิก
             </button>
-            <button onClick={save} className="btn-primary flex-1">
-              บันทึก
+            <button onClick={save} disabled={saving} className="btn-primary flex-1">
+              {saving ? "กำลังบันทึก..." : "บันทึก"}
             </button>
           </div>
         </div>

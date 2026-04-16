@@ -6,6 +6,7 @@ import { stats, fmt } from "@/lib/stats";
 import { isOutlier } from "@/lib/outlier";
 import { StatsCard } from "./StatsCard";
 import { Icon } from "./Icon";
+import { Toast, useToast } from "./Toast";
 import { clsx } from "clsx";
 import { useScale } from "@/lib/useScale";
 
@@ -47,6 +48,7 @@ export function WeightEntry({
   const [draft, setDraft] = useState<string>("");
   const [unit, setUnit] = useState<WeightUnit>(initialUnit);
   const [, startTransition] = useTransition();
+  const toast = useToast();
   const scale = useScale({
     onReading: (value) => {
       setDraft(String(value));
@@ -88,7 +90,7 @@ export function WeightEntry({
       setItems((prev) => [...prev, data as WeightMeasurement]);
       setDraft("");
     } else if (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   }
 
@@ -113,14 +115,18 @@ export function WeightEntry({
       setItems([...items, data as WeightMeasurement]);
       setDraft("");
     } else if (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   }
 
   async function removeValue(id: string) {
     if (!confirm("ต้องการลบค่านี้หรือไม่?")) return;
     const { error } = await supabase.from("weight_measurements").delete().eq("id", id);
-    if (!error) setItems(items.filter((i) => i.id !== id));
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setItems(items.filter((i) => i.id !== id));
   }
 
   useEffect(() => {
@@ -150,6 +156,7 @@ export function WeightEntry({
 
   return (
     <div className="flex flex-col gap-4">
+      <Toast message={toast.msg} variant={toast.variant} />
       {/* เลือกหน่วยวัด */}
       <div className="card">
         <span className="section-title">หน่วยวัด</span>
@@ -247,9 +254,10 @@ export function WeightEntry({
                   <button
                     type="button"
                     onClick={() => removeValue(m.id)}
-                    className="p-1 text-outline hover:text-error transition-colors"
+                    aria-label="ลบค่านี้"
+                    className="w-11 h-11 -mr-2 flex items-center justify-center text-outline hover:text-error active:scale-95 transition-all"
                   >
-                    <Icon name="delete" className="text-base" />
+                    <Icon name="delete" className="text-lg" />
                   </button>
                 )}
               </div>
