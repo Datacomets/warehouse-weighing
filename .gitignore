@@ -8,3 +8,7 @@ out
 
 .vercel
 .env*.local
+
+# Backup
+scripts/.env.backup
+backups/
