@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { validateHeader } from "@/lib/validation";
+import { translateSupabaseError } from "@/lib/supabaseError";
 
 export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
   const router = useRouter();
@@ -54,7 +55,7 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
     const { error } = await supabase.from("gr_documents").update(payload).eq("id", doc.id);
     setSaving(false);
     if (error) {
-      setErr(error.message);
+      setErr(translateSupabaseError(error));
       return;
     }
     if (userId) {

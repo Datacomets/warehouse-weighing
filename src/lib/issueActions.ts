@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { translateSupabaseError } from "./supabaseError";
 
 export interface IssueDraft {
   issue_type: string;
@@ -51,7 +52,7 @@ export async function uploadIssuePhoto(
   const path = `${documentId}/issues/${nowMs}-${file.name}`;
   const { data, error } = await supabase.storage.from("gr-photos").upload(path, file);
   if (error || !data) {
-    return { ok: false, error: error?.message ?? "upload failed" };
+    return { ok: false, error: translateSupabaseError(error) };
   }
   const { data: pub } = supabase.storage.from("gr-photos").getPublicUrl(data.path);
   return { ok: true, data: pub.publicUrl };
@@ -86,7 +87,7 @@ export async function createIssue(
     })
     .select("*")
     .single();
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateSupabaseError(error) };
   return { ok: true, data };
 }
 
@@ -96,6 +97,6 @@ export async function deleteIssue(
   id: string
 ): Promise<IssueActionResultVoid> {
   const { error } = await supabase.from("issue_reports").delete().eq("id", id);
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateSupabaseError(error) };
   return { ok: true };
 }

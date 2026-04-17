@@ -197,7 +197,8 @@ describe("uploadWeightPhoto()", () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("Upload failed");
+    // Error passes through translator; unknown "bucket full" message stays as-is
+    if (!result.ok) expect(result.error).toBe("bucket full");
     expect(sb.from).not.toHaveBeenCalled();
   });
 

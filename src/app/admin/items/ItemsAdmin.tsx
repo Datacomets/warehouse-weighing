@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { SectionHeader } from "@/components/Field";
+import { translateSupabaseError } from "@/lib/supabaseError";
 
 interface ItemRow {
   item_code: string;
@@ -118,7 +119,7 @@ export function ItemsAdmin({ initialItems }: { initialItems: ItemRow[] }) {
     if (!confirm(`ลบ ${code} ?`)) return;
     const { error } = await supabase.from("item_master").delete().eq("item_code", code);
     if (error) {
-      setErr(error.message);
+      setErr(translateSupabaseError(error));
       return;
     }
     setItems((prev) => prev.filter((x) => x.item_code !== code));

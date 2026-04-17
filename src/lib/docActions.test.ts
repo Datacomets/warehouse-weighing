@@ -251,18 +251,19 @@ describe("completeSapEntry()", () => {
         file: makeFakeFile(),
       });
 
-      expect(result).toEqual({ ok: false, error: "Upload failed: bucket full" });
+      // Unknown error messages pass through the translator unchanged
+      expect(result).toEqual({ ok: false, error: "bucket full" });
       expect(sb.from).not.toHaveBeenCalled();
       expect(sb.update).not.toHaveBeenCalled();
       expect(sb.insert).not.toHaveBeenCalled();
     });
 
-    it("does NOT write audit_log when the doc update fails", async () => {
+    it("does NOT write audit_log when the doc update fails (translates RLS → Thai)", async () => {
       sb.updateEq.mockResolvedValue({ error: { message: "row-level security" } });
 
       const result = await completeSapEntry(sb.client, baseInput);
 
-      expect(result).toEqual({ ok: false, error: "row-level security" });
+      expect(result).toEqual({ ok: false, error: "ไม่มีสิทธิ์ดำเนินการนี้" });
       expect(sb.insert).not.toHaveBeenCalled();
     });
   });

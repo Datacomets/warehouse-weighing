@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { WeightKind } from "./types";
+import { translateSupabaseError } from "./supabaseError";
 
 export const WEIGHT_PHOTO_MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 export const WEIGHT_PHOTO_ALLOWED_TYPES: readonly string[] = [
@@ -82,7 +83,7 @@ export async function uploadWeightPhoto(
     .from("gr-photos")
     .upload(path, file, { cacheControl: "3600", upsert: false });
   if (uploadErr || !uploaded) {
-    return { ok: false, error: "Upload failed: " + (uploadErr?.message ?? "unknown") };
+    return { ok: false, error: translateSupabaseError(uploadErr) };
   }
 
   const { data: pub } = supabase.storage.from("gr-photos").getPublicUrl(uploaded.path);
@@ -95,7 +96,7 @@ export async function uploadWeightPhoto(
     .single();
 
   if (insertErr || !row) {
-    return { ok: false, error: insertErr?.message ?? "insert failed" };
+    return { ok: false, error: translateSupabaseError(insertErr) };
   }
 
   return { ok: true, data: row as UploadedPhoto };
@@ -107,6 +108,6 @@ export async function deleteWeightPhoto(
   id: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const { error } = await supabase.from("weight_photos").delete().eq("id", id);
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateSupabaseError(error) };
   return { ok: true };
 }

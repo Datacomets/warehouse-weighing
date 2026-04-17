@@ -3,6 +3,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
+import { translateSupabaseError } from "@/lib/supabaseError";
 
 export default function LoginPage() {
   return (
@@ -29,7 +30,7 @@ function LoginInner() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      setErr(error.message);
+      setErr(translateSupabaseError(error));
       return;
     }
     const target = search.get("from") || "/";

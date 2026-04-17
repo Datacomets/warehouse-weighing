@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { validateSapEntry } from "./sapAttachment";
+import { translateSupabaseError } from "./supabaseError";
 
 export type DocActionResult =
   | { ok: true }
@@ -27,7 +28,7 @@ export async function submitDocument(
       ended_at: iso,
     })
     .eq("id", docId);
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateSupabaseError(error) };
 
   await supabase.from("audit_log").insert({
     document_id: docId,
@@ -62,7 +63,7 @@ export async function unlockDocument(
       ended_at: null,
     })
     .eq("id", docId);
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateSupabaseError(error) };
 
   await supabase.from("audit_log").insert({
     document_id: docId,
@@ -109,7 +110,7 @@ export async function completeSapEntry(
       .from("sap-attachments")
       .upload(path, input.file);
     if (uploadErr || !uploaded) {
-      return { ok: false, error: `Upload failed: ${uploadErr?.message || "unknown"}` };
+      return { ok: false, error: translateSupabaseError(uploadErr) };
     }
     const { data: pub } = supabase.storage.from("sap-attachments").getPublicUrl(uploaded.path);
     attachmentUrl = pub.publicUrl;
@@ -127,7 +128,7 @@ export async function completeSapEntry(
       closed_at: closedAt,
     })
     .eq("id", input.doc.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: translateSupabaseError(error) };
 
   await supabase.from("audit_log").insert({
     document_id: input.doc.id,

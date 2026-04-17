@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Field } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { validateRemainder } from "@/lib/validation";
+import { translateSupabaseError } from "@/lib/supabaseError";
 import { StepButtons } from "@/components/StepButtons";
 import { Toast, useToast } from "@/components/Toast";
 
@@ -49,7 +50,7 @@ export function RemainderForm({
       .eq("id", doc.id);
     setSaving(false);
     if (error) {
-      setErr(error.message);
+      setErr(translateSupabaseError(error));
       return;
     }
     toast.show("บันทึกเศษสำเร็จ!");
