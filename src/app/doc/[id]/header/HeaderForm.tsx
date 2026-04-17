@@ -6,6 +6,7 @@ import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
 import { validateHeader } from "@/lib/validation";
 import { translateSupabaseError } from "@/lib/supabaseError";
+import { clsx } from "clsx";
 
 export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
   const router = useRouter();
@@ -200,7 +201,7 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
       </Field>
 
       <SectionHeader icon="verified" title="QC Status" accent />
-      <div className="flex gap-2">
+      <div className="flex gap-2 min-w-0">
         {[
           { v: "reimburse", label: "QC เบิก" },
           { v: "no_reimburse", label: "QC ไม่เบิก" },
@@ -210,11 +211,11 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
             key={opt.v}
             disabled={readOnly}
             onClick={() => setF({ ...f, qc_status: opt.v })}
-            className={
-              f.qc_status === opt.v
-                ? "btn-primary flex-1 h-11 text-sm"
-                : "btn-secondary flex-1 h-11 text-sm"
-            }
+            className={clsx(
+              "flex-1 h-11 text-sm min-w-0",
+              f.qc_status === opt.v ? "btn-primary" : "btn-secondary",
+              readOnly && "opacity-50 cursor-not-allowed"
+            )}
           >
             {opt.label}
           </button>

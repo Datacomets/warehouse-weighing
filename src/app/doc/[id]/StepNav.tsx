@@ -25,7 +25,8 @@ export function StepNav({
   completed?: Record<string, boolean>;
 }) {
   const path = usePathname();
-  const canSubmit = REQUIRED_STEPS.every((k) => completed[k]);
+  const doneCount = REQUIRED_STEPS.filter((k) => completed[k]).length;
+  const canSubmit = doneCount === REQUIRED_STEPS.length;
 
   return (
     <nav className="flex gap-2 overflow-x-auto no-scrollbar mb-4 -mx-4 px-4 sticky top-16 bg-background z-30 pb-2 pt-1">
@@ -52,8 +53,15 @@ export function StepNav({
             {done && !active && (
               <Icon name="check_circle" className="text-success text-sm" />
             )}
-            {locked && <Icon name="lock" className="text-on-surface-variant/50 text-sm" />}
+            {locked && (
+              <span title={`ทำครบ ${doneCount}/${REQUIRED_STEPS.length} ขั้นตอนก่อนจึงจะส่งงานได้`}>
+                <Icon name="lock" className="text-on-surface-variant/50 text-sm" />
+              </span>
+            )}
             {i + 1}. {s.label}
+            {locked && (
+              <span className="text-[10px] font-normal opacity-60">{doneCount}/{REQUIRED_STEPS.length}</span>
+            )}
           </Link>
         );
       })}

@@ -15,7 +15,7 @@ import {
 const PdfDownloadButtons = dynamic(
   () => import("./PdfDownloadButtons").catch(() => {
     return { default: () => (
-      <button className="btn-secondary" disabled>
+      <button className="btn-secondary text-error" disabled>
         <Icon name="error" /> ไม่สามารถโหลดตัวสร้าง PDF ได้ — ลองรีเฟรชหน้า
       </button>
     )};
@@ -24,7 +24,8 @@ const PdfDownloadButtons = dynamic(
     ssr: false,
     loading: () => (
       <button className="btn-primary" disabled>
-        <Icon name="download" /> กำลังโหลดตัวสร้าง PDF...
+        <span className="inline-block w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin" />
+        กำลังเตรียม PDF...
       </button>
     ),
   }
