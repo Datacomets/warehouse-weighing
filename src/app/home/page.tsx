@@ -79,9 +79,18 @@ export default async function HomePage({
 
         <div className="flex flex-col gap-4 mt-2">
           {(docs || []).length === 0 && (
-            <div className="card text-center text-outline py-12">
-              <Icon name="folder_open" className="text-4xl mb-2" />
+            <div className="card text-center text-outline py-12 flex flex-col items-center gap-3">
+              <Icon name="folder_open" className="text-4xl" />
               <p className="text-sm">ยังไม่มีเอกสารในหมวดนี้</p>
+              {tab !== "completed" && (
+                <Link
+                  href="/new"
+                  className="btn-filled inline-flex items-center gap-2 mt-2"
+                >
+                  <Icon name="add" filled />
+                  สร้างเอกสารใหม่
+                </Link>
+              )}
             </div>
           )}
           {(docs || []).map((d: any) => (

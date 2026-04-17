@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { SubmitPanel } from "./SubmitPanel";
 import { SectionHeader } from "@/components/Field";
 import { fmtDateTime, leadTimeText } from "@/lib/stats";
@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 
 export default async function SubmitPage({ params }: { params: { id: string } }) {
+  const { profile } = await getCurrentUserAndProfile();
   const supabase = createClient();
   const { data: doc } = await supabase
     .from("gr_documents")
@@ -95,7 +96,12 @@ export default async function SubmitPage({ params }: { params: { id: string } })
         <Icon name="picture_as_pdf" /> ดูตัวอย่าง / Export PDF
       </Link>
 
-      <SubmitPanel docId={params.id} canSubmit={hasAll} status={doc.status} />
+      <SubmitPanel
+        docId={params.id}
+        canSubmit={hasAll}
+        status={doc.status}
+        canRecall={doc.status === "pending_sap" && doc.submitted_by === profile?.id}
+      />
     </div>
   );
 }

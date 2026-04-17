@@ -4,16 +4,18 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { Toast, useToast } from "@/components/Toast";
-import { submitDocument } from "@/lib/docActions";
+import { submitDocument, recallSubmission } from "@/lib/docActions";
 
 export function SubmitPanel({
   docId,
   canSubmit,
   status,
+  canRecall = false,
 }: {
   docId: string;
   canSubmit: boolean;
   status: string;
+  canRecall?: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -40,13 +42,52 @@ export function SubmitPanel({
     }, 1500);
   }
 
-  if (status === "pending_sap" || status === "completed") {
+  async function recall() {
+    setLoading(true);
+    setErr(null);
+    const { data: { user } } = await supabase.auth.getUser();
+    const result = await recallSubmission(supabase, { docId, userId: user?.id ?? null });
+    if (!result.ok) {
+      setErr(result.error);
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
+    toast.show("ถอนส่งงานสำเร็จ");
+    router.refresh();
+  }
+
+  if (status === "completed") {
     return (
       <div className="card bg-secondary-container/40 border-l-4 border-primary-container">
-        <p className="text-sm">
-          เอกสารนี้ส่งงานแล้ว — รอ Admin นำเข้า SAP
-        </p>
+        <p className="text-sm">เอกสารนี้เสร็จสิ้นแล้ว — Admin นำเข้า SAP แล้ว</p>
       </div>
+    );
+  }
+
+  if (status === "pending_sap") {
+    return (
+      <>
+        <Toast message={toast.msg} />
+        <div className="card bg-secondary-container/40 border-l-4 border-primary-container">
+          <p className="text-sm">เอกสารนี้ส่งงานแล้ว — รอ Admin นำเข้า SAP</p>
+          {canRecall && (
+            <div className="mt-3 pt-3 border-t border-outline-variant/30">
+              <p className="text-xs text-on-surface-variant mb-2">
+                ต้องการแก้ไขข้อมูล? สามารถถอนส่งงานกลับมาแก้ไขได้
+              </p>
+              {err && <p className="text-xs text-error mb-2">{err}</p>}
+              <button
+                onClick={recall}
+                disabled={loading}
+                className="btn-secondary text-sm"
+              >
+                <Icon name="undo" /> {loading ? "กำลังถอน..." : "ถอนส่งงาน"}
+              </button>
+            </div>
+          )}
+        </div>
+      </>
     );
   }
 

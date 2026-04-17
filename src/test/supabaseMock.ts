@@ -12,7 +12,13 @@ import { vi } from "vitest";
  * Each test configures resolved values per call via the returned spies.
  */
 export function makeSupabaseMock() {
-  const updateEq = vi.fn().mockResolvedValue({ error: null });
+  const updateEq: any = vi.fn().mockResolvedValue({ error: null });
+  // Support chained .eq().eq() — each .eq() returns { eq: updateEq }
+  updateEq.mockImplementation(() => {
+    const chainable: any = Promise.resolve({ error: null });
+    chainable.eq = updateEq;
+    return chainable;
+  });
   const update = vi.fn(() => ({ eq: updateEq }));
   const insert = vi.fn().mockResolvedValue({ error: null });
 

@@ -74,6 +74,34 @@ export async function unlockDocument(
   return { ok: true };
 }
 
+/**
+ * Operator-initiated recall: pending_sap → in_progress.
+ * Only the submitter can recall, and only while still pending_sap.
+ */
+export async function recallSubmission(
+  supabase: SupabaseClient,
+  { docId, userId }: { docId: string; userId: string | null }
+): Promise<DocActionResult> {
+  const { error } = await supabase
+    .from("gr_documents")
+    .update({
+      status: "in_progress",
+      submitted_at: null,
+      ended_at: null,
+    })
+    .eq("id", docId)
+    .eq("status", "pending_sap")
+    .eq("submitted_by", userId);
+  if (error) return { ok: false, error: translateSupabaseError(error) };
+
+  await supabase.from("audit_log").insert({
+    document_id: docId,
+    actor: userId,
+    action: "recall_submission",
+  });
+  return { ok: true };
+}
+
 export interface CompleteSapEntryInput {
   doc: { id: string; sap_attachment_url: string | null };
   cfsd: string;

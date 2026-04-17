@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { submitDocument, unlockDocument, completeSapEntry } from "./docActions";
+import { submitDocument, unlockDocument, recallSubmission, completeSapEntry } from "./docActions";
 import { makeSupabaseMock, makeFakeFile } from "@/test/supabaseMock";
 
 describe("submitDocument()", () => {
@@ -121,6 +121,52 @@ describe("unlockDocument()", () => {
     });
 
     expect(result).toEqual({ ok: false, error: "constraint violation" });
+    expect(sb.insert).not.toHaveBeenCalled();
+  });
+});
+
+describe("recallSubmission()", () => {
+  let sb: ReturnType<typeof makeSupabaseMock>;
+  beforeEach(() => {
+    sb = makeSupabaseMock();
+  });
+
+  it("reverts pending_sap doc to in_progress and clears timestamps", async () => {
+    const result = await recallSubmission(sb.client, { docId: "doc-1", userId: "user-1" });
+
+    expect(result).toEqual({ ok: true });
+    expect(sb.update).toHaveBeenCalledWith({
+      status: "in_progress",
+      submitted_at: null,
+      ended_at: null,
+    });
+    // Chained .eq calls: first for id, second for status, third for submitted_by
+    expect(sb.updateEq).toHaveBeenCalledWith("id", "doc-1");
+    expect(sb.updateEq).toHaveBeenCalledWith("status", "pending_sap");
+    expect(sb.updateEq).toHaveBeenCalledWith("submitted_by", "user-1");
+  });
+
+  it("writes audit_log with action=recall_submission", async () => {
+    await recallSubmission(sb.client, { docId: "doc-1", userId: "user-1" });
+
+    expect(sb.from).toHaveBeenCalledWith("audit_log");
+    expect(sb.insert).toHaveBeenCalledWith({
+      document_id: "doc-1",
+      actor: "user-1",
+      action: "recall_submission",
+    });
+  });
+
+  it("does not write audit_log when update fails", async () => {
+    sb.updateEq.mockImplementation(() => {
+      const chainable: any = Promise.resolve({ error: { message: "not found" } });
+      chainable.eq = sb.updateEq;
+      return chainable;
+    });
+
+    const result = await recallSubmission(sb.client, { docId: "doc-1", userId: "user-1" });
+
+    expect(result).toEqual({ ok: false, error: "not found" });
     expect(sb.insert).not.toHaveBeenCalled();
   });
 });

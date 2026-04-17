@@ -78,7 +78,7 @@ export function RemainderForm({
             value={remainderPcs}
             onChange={(e) => {
               const v = e.target.value;
-              if (v !== "" && Number(v) < 0) return;
+              if (v !== "" && (Number(v) < 0 || !Number.isInteger(Number(v)))) return;
               setRemainderPcs(v);
             }}
             className="input-base"

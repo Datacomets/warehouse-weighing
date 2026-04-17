@@ -14,6 +14,9 @@ const STEPS = [
   { key: "submit", label: "ส่งงาน" },
 ];
 
+/** Required steps that must be completed before submit is unlocked */
+const REQUIRED_STEPS = ["header", "per-pcs", "per-inner", "count", "remainder"];
+
 export function StepNav({
   docId,
   completed = {},
@@ -22,12 +25,15 @@ export function StepNav({
   completed?: Record<string, boolean>;
 }) {
   const path = usePathname();
+  const canSubmit = REQUIRED_STEPS.every((k) => completed[k]);
+
   return (
     <nav className="flex gap-2 overflow-x-auto no-scrollbar mb-4 -mx-4 px-4 sticky top-16 bg-background z-30 pb-2 pt-1">
       {STEPS.map((s, i) => {
         const href = `/doc/${docId}/${s.key}`;
         const active = path === href || path.startsWith(href);
         const done = !!completed[s.key];
+        const locked = s.key === "submit" && !canSubmit && !done;
         return (
           <Link
             key={s.key}
@@ -38,12 +44,15 @@ export function StepNav({
                 ? "bg-primary-container text-on-primary border-primary-container"
                 : done
                 ? "bg-success/10 text-success border-success/30"
+                : locked
+                ? "bg-surface-container-low text-on-surface-variant/50 border-outline-variant/20"
                 : "bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:bg-surface-container"
             )}
           >
             {done && !active && (
               <Icon name="check_circle" className="text-success text-sm" />
             )}
+            {locked && <Icon name="lock" className="text-on-surface-variant/50 text-sm" />}
             {i + 1}. {s.label}
           </Link>
         );
