@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { translateSupabaseError } from "@/lib/supabaseError";
+import { empCodeToEmail, isValidEmpCode, normalizeEmpCode } from "@/lib/empCode";
 
 export default function LoginPage() {
   return (
@@ -17,7 +18,7 @@ function LoginInner() {
   const router = useRouter();
   const search = useSearchParams();
   const supabase = createClient();
-  const [email, setEmail] = useState("");
+  const [empCode, setEmpCode] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,8 +27,16 @@ function LoginInner() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    const normalized = normalizeEmpCode(empCode);
+    if (!isValidEmpCode(normalized)) {
+      setErr("รหัสพนักงานไม่ถูกต้อง");
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: empCodeToEmail(normalized),
+      password,
+    });
     setLoading(false);
     if (error) {
       setErr(translateSupabaseError(error));
@@ -58,15 +67,17 @@ function LoginInner() {
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="relative">
-            <Icon name="person" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg" />
+            <Icon name="badge" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg" />
             <input
-              type="email"
+              type="text"
               required
-              placeholder="อีเมล"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-base pl-10"
+              placeholder="รหัสพนักงาน"
+              value={empCode}
+              onChange={(e) => setEmpCode(e.target.value)}
+              className="input-base pl-10 uppercase"
               autoComplete="username"
+              autoCapitalize="characters"
+              spellCheck={false}
             />
           </div>
           <div className="relative">
