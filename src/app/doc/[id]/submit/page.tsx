@@ -30,6 +30,9 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     measurementKinds: (items || []).map((i: any) => i.kind),
     gridCount: gridCount || 0,
     remainderPcs: doc.remainder_pcs,
+    skipPerPcs: !!doc.skip_per_pcs,
+    skipPerInner: !!doc.skip_per_inner,
+    skipPerCarton: !!doc.skip_per_carton,
   });
 
   const qtyPerCarton = Number(doc.qty_per_carton) || 0;
@@ -58,15 +61,33 @@ export default async function SubmitPage({ params }: { params: { id: string } })
         <ul className="mt-2 text-sm flex flex-col gap-1">
           <li className={hasPcs ? "text-success" : "text-error"}>
             {hasPcs ? "✓" : "✗"} ชั่ง Per Pcs
+            {doc.skip_per_pcs && (
+              <span className="text-outline text-xs ml-1">
+                (ข้าม: {doc.skip_reason_per_pcs || "ไม่ระบุเหตุผล"})
+              </span>
+            )}
           </li>
           <li className={hasInner ? "text-success" : "text-error"}>
             {hasInner ? "✓" : "✗"} ชั่ง Per Inner/Tray/Bag
+            {doc.skip_per_inner && (
+              <span className="text-outline text-xs ml-1">
+                (ข้าม: {doc.skip_reason_per_inner || "ไม่ระบุเหตุผล"})
+              </span>
+            )}
           </li>
           <li className={hasCarton ? "text-success" : "text-error"}>
             {hasCarton ? "✓" : "✗"} ชั่ง Per Carton (Grid)
+            {doc.skip_per_carton && (
+              <span className="text-outline text-xs ml-1">
+                (ข้าม: {doc.skip_reason_per_carton || "ไม่ระบุเหตุผล"})
+              </span>
+            )}
           </li>
           <li className={hasRemainder ? "text-success" : "text-error"}>
             {hasRemainder ? "✓" : "✗"} นับเศษ (Remainder)
+            {doc.skip_per_carton && (
+              <span className="text-outline text-xs ml-1">(ไม่จำเป็น — ข้ามแท็บลังแล้ว)</span>
+            )}
           </li>
         </ul>
       </div>

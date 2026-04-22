@@ -37,10 +37,11 @@ export default async function DocLayout({
   const kinds = new Set((weights || []).map((w: any) => w.kind));
   const completed: Record<string, boolean> = {
     header: !!(doc.scale_name || doc.qty_per_carton || doc.gross_weight),
-    "per-pcs": kinds.has("per_pcs"),
-    "per-inner": kinds.has("per_inner"),
-    count: (gridCount || 0) > 0,
-    remainder: doc.remainder_pcs != null,
+    "per-pcs": kinds.has("per_pcs") || !!doc.skip_per_pcs,
+    "per-inner": kinds.has("per_inner") || !!doc.skip_per_inner,
+    count: (gridCount || 0) > 0 || !!doc.skip_per_carton,
+    // carton skipped → remainder is implicitly N/A and counted as done
+    remainder: doc.remainder_pcs != null || !!doc.skip_per_carton,
     issues: true, // optional step — always "ok"
     submit: doc.status === "pending_sap" || doc.status === "completed",
   };

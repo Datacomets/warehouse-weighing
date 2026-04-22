@@ -1,16 +1,16 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WeightEntry } from "@/components/WeightEntry";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { SectionHeader } from "@/components/Field";
+import { SkipSection } from "@/components/SkipSection";
 import { StepButtons } from "@/components/StepButtons";
 
 export default async function PerPcsPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const { data: doc } = await supabase
     .from("gr_documents")
-    .select("id,status,weight_unit")
+    .select("id,status,weight_unit,skip_per_pcs,skip_reason_per_pcs")
     .eq("id", params.id)
     .single();
   if (!doc) notFound();
@@ -27,19 +27,32 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
     .eq("kind", "per_pcs");
 
   const readOnly = doc?.status !== "in_progress";
+  const skipped = !!doc.skip_per_pcs;
 
   return (
     <div className="flex flex-col gap-5">
       <SectionHeader icon="balance" title="ขั้นตอนที่ 2 — ชั่ง Per Pcs" accent />
-      <WeightEntry
-        documentId={params.id}
+      <SkipSection
         docId={doc.id}
         kind="per_pcs"
-        initial={(items || []) as any}
+        initialSkipped={skipped}
+        initialReason={doc.skip_reason_per_pcs ?? null}
+        hasData={(items?.length || 0) > 0}
         readOnly={readOnly}
-        initialUnit={doc.weight_unit || "kg"}
       />
-      <PhotoUploader documentId={params.id} kind="per_pcs" initial={(photos || []) as any} readOnly={readOnly} />
+      {!skipped && (
+        <>
+          <WeightEntry
+            documentId={params.id}
+            docId={doc.id}
+            kind="per_pcs"
+            initial={(items || []) as any}
+            readOnly={readOnly}
+            initialUnit={doc.weight_unit || "kg"}
+          />
+          <PhotoUploader documentId={params.id} kind="per_pcs" initial={(photos || []) as any} readOnly={readOnly} />
+        </>
+      )}
 
       {!readOnly && (
         <StepButtons

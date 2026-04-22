@@ -45,6 +45,12 @@ export interface GrDocument {
   closed_by: string | null;
   closed_at: string | null;
   unlock_reason: string | null;
+  skip_per_pcs: boolean;
+  skip_per_inner: boolean;
+  skip_per_carton: boolean;
+  skip_reason_per_pcs: string | null;
+  skip_reason_per_inner: string | null;
+  skip_reason_per_carton: string | null;
   started_at: string;
   ended_at: string | null;
   created_at: string;

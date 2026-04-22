@@ -12,3 +12,10 @@ out
 # Backup
 scripts/.env.backup
 backups/
+
+# Build artifacts
+tsconfig.tsbuildinfo
+test-report.txt
+
+# Supabase CLI cache
+supabase/.temp/

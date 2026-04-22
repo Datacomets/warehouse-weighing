@@ -114,4 +114,76 @@ describe("computeSubmitChecklist()", () => {
     });
     expect(result.hasAll).toBe(true);
   });
+
+  describe("skip flags", () => {
+    it("skipPerPcs makes hasPcs true without measurements", () => {
+      const result = computeSubmitChecklist({
+        measurementKinds: ["per_inner"],
+        gridCount: 1,
+        remainderPcs: 0,
+        skipPerPcs: true,
+      });
+      expect(result.hasPcs).toBe(true);
+      expect(result.hasAll).toBe(true);
+    });
+
+    it("skipPerInner makes hasInner true without measurements", () => {
+      const result = computeSubmitChecklist({
+        measurementKinds: ["per_pcs"],
+        gridCount: 1,
+        remainderPcs: 0,
+        skipPerInner: true,
+      });
+      expect(result.hasInner).toBe(true);
+      expect(result.hasAll).toBe(true);
+    });
+
+    it("skipPerCarton makes hasCarton true and auto-satisfies hasRemainder", () => {
+      const result = computeSubmitChecklist({
+        measurementKinds: ["per_pcs", "per_inner"],
+        gridCount: 0,
+        remainderPcs: null,
+        skipPerCarton: true,
+      });
+      expect(result.hasCarton).toBe(true);
+      expect(result.hasRemainder).toBe(true);
+      expect(result.hasAll).toBe(true);
+    });
+
+    it("all three skipped + no data is valid to submit", () => {
+      const result = computeSubmitChecklist({
+        measurementKinds: [],
+        gridCount: 0,
+        remainderPcs: null,
+        skipPerPcs: true,
+        skipPerInner: true,
+        skipPerCarton: true,
+      });
+      expect(result.hasAll).toBe(true);
+    });
+
+    it("skip=false behaves like the original contract", () => {
+      const result = computeSubmitChecklist({
+        measurementKinds: [],
+        gridCount: 0,
+        remainderPcs: null,
+        skipPerPcs: false,
+        skipPerInner: false,
+        skipPerCarton: false,
+      });
+      expect(result.hasAll).toBe(false);
+    });
+
+    it("carton weighed + skipPerCarton=true is still valid (skip trumps counts)", () => {
+      // shouldn't happen in practice but the contract stays deterministic
+      const result = computeSubmitChecklist({
+        measurementKinds: ["per_pcs", "per_inner"],
+        gridCount: 3,
+        remainderPcs: null,
+        skipPerCarton: true,
+      });
+      expect(result.hasRemainder).toBe(true);
+      expect(result.hasAll).toBe(true);
+    });
+  });
 });
