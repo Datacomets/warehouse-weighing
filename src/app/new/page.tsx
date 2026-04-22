@@ -22,7 +22,7 @@ export default async function NewDocPage() {
     <>
       <TopAppBar title="สร้างเอกสารใหม่" subtitle="กรอกข้อมูลก่อนเริ่มชั่งน้ำหนัก" showBack />
       <main className="mt-16 pb-32 px-4">
-        <CreateDocForm whNumber={whNumber as string} userId={profile.id} />
+        <CreateDocForm whNumber={whNumber as string} userId={profile.id} role={profile.role} />
       </main>
     </>
   );

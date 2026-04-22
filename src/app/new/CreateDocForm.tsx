@@ -4,8 +4,18 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import type { UserRole } from "@/lib/types";
 
-export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: string }) {
+export function CreateDocForm({
+  whNumber,
+  userId,
+  role,
+}: {
+  whNumber: string;
+  userId: string;
+  role: UserRole;
+}) {
+  const canEnterSap = role !== "operator";
   const router = useRouter();
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
@@ -158,23 +168,27 @@ export function CreateDocForm({ whNumber, userId }: { whNumber: string; userId: 
         </Field>
       </div>
 
-      <SectionHeader icon="link" title="ข้อมูล SAP (Optional)" accent />
-      <Field label="Inbound Delivery ID (CFSD)" hint="กรอกภายหลังก็ได้">
-        <input
-          value={form.sap_inbound_id}
-          onChange={(e) => setForm({ ...form, sap_inbound_id: e.target.value })}
-          className="input-base"
-          placeholder="เช่น CFSD-8634"
-        />
-      </Field>
-      <Field label="Delivery Notification ID">
-        <input
-          value={form.sap_notification_id}
-          onChange={(e) => setForm({ ...form, sap_notification_id: e.target.value })}
-          className="input-base"
-          placeholder="เช่น INV26-CWZ014#7"
-        />
-      </Field>
+      {canEnterSap && (
+        <>
+          <SectionHeader icon="link" title="ข้อมูล SAP (Optional)" accent />
+          <Field label="Inbound Delivery ID (CFSD)" hint="กรอกภายหลังก็ได้">
+            <input
+              value={form.sap_inbound_id}
+              onChange={(e) => setForm({ ...form, sap_inbound_id: e.target.value })}
+              className="input-base"
+              placeholder="เช่น CFSD-8634"
+            />
+          </Field>
+          <Field label="Delivery Notification ID">
+            <input
+              value={form.sap_notification_id}
+              onChange={(e) => setForm({ ...form, sap_notification_id: e.target.value })}
+              className="input-base"
+              placeholder="เช่น INV26-CWZ014#7"
+            />
+          </Field>
+        </>
+      )}
 
       {err && (
         <div className="bg-error-container text-on-error-container text-xs px-3 py-2 rounded-lg">
