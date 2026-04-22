@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CountGrid } from "./CountGrid";
 import { SectionHeader } from "@/components/Field";
+import { SkipSection } from "@/components/SkipSection";
 
 export default async function CountPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -16,6 +17,9 @@ export default async function CountPage({ params }: { params: { id: string } }) 
     .select("*")
     .eq("document_id", params.id);
 
+  const readOnly = doc.status !== "in_progress";
+  const skipped = !!doc.skip_per_carton;
+
   return (
     <div className="flex flex-col gap-5">
       <SectionHeader icon="local_shipping" title="ชั่ง Per Carton (ใบตรวจนับ)" accent />
@@ -25,7 +29,21 @@ export default async function CountPage({ params }: { params: { id: string } }) 
         <div className="col-span-2"><b>Description:</b> {doc.description}</div>
         <div><b>ชิ้น/ลัง:</b> {doc.qty_per_carton ?? "-"}</div>
       </div>
-      <CountGrid documentId={params.id} doc={doc} initial={(entries || []) as any} />
+      <SkipSection
+        docId={doc.id}
+        kind="per_carton"
+        initialSkipped={skipped}
+        initialReason={doc.skip_reason_per_carton ?? null}
+        hasData={(entries?.length || 0) > 0}
+        readOnly={readOnly}
+      />
+      {skipped ? (
+        <p className="text-xs text-outline">
+          เมื่อข้ามการชั่งต่อลัง ระบบจะข้ามการนับเศษให้อัตโนมัติในขั้นส่งงาน
+        </p>
+      ) : (
+        <CountGrid documentId={params.id} doc={doc} initial={(entries || []) as any} />
+      )}
     </div>
   );
 }
