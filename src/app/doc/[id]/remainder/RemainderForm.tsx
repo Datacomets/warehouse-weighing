@@ -31,21 +31,14 @@ export function RemainderForm({
   const hasRemainder = remainder > 0;
   const totalPcs = qtyPerCarton * fullCartons + remainder;
 
-  async function save() {
+  async function persistRemainder(val: number | null, successMsg: string) {
     setSaving(true);
     setErr(null);
-    const validationError = validateRemainder(remainderPcs);
-    if (validationError) {
-      setErr(validationError);
-      setSaving(false);
-      return;
-    }
-    const val = remainderPcs === "" ? null : Number(remainderPcs);
     const { error } = await supabase
       .from("gr_documents")
       .update({
         remainder_pcs: val,
-        actual_count: fullCartons + (hasRemainder ? 1 : 0),
+        actual_count: fullCartons + ((val ?? 0) > 0 ? 1 : 0),
       })
       .eq("id", doc.id);
     setSaving(false);
@@ -53,8 +46,23 @@ export function RemainderForm({
       setErr(translateSupabaseError(error));
       return;
     }
-    toast.show("บันทึกเศษสำเร็จ!");
+    toast.show(successMsg);
     router.refresh();
+  }
+
+  async function save() {
+    const validationError = validateRemainder(remainderPcs);
+    if (validationError) {
+      setErr(validationError);
+      return;
+    }
+    const val = remainderPcs === "" ? null : Number(remainderPcs);
+    await persistRemainder(val, "บันทึกเศษสำเร็จ!");
+  }
+
+  async function markNoRemainder() {
+    setRemainderPcs("0");
+    await persistRemainder(0, "บันทึกว่าไม่มีเศษ");
   }
 
   return (
@@ -68,7 +76,7 @@ export function RemainderForm({
 
       {/* กรอกเศษ */}
       <div className="card border-l-4 border-tertiary-fixed-dim">
-        <Field label="จำนวนเศษ (ชิ้น)" hint="นับจำนวนชิ้นที่ไม่ครบลัง ถ้าไม่มีเศษให้เว้นว่าง">
+        <Field label="จำนวนเศษ (ชิ้น)" hint="นับจำนวนชิ้นที่ไม่ครบลัง ถ้าไม่มีเศษให้กดปุ่ม 'ไม่มีเศษ'">
           <input
             disabled={readOnly}
             type="number"
@@ -86,14 +94,32 @@ export function RemainderForm({
           />
         </Field>
         {!readOnly && (
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="btn-secondary mt-3 h-10 text-sm"
-          >
-            {saving ? "กำลังบันทึก..." : "บันทึกจำนวนเศษ"}
-          </button>
+          <div className="flex gap-2 mt-3">
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="btn-primary flex-1 h-10 text-sm"
+            >
+              {saving ? "กำลังบันทึก..." : "บันทึกจำนวนเศษ"}
+            </button>
+            <button
+              type="button"
+              onClick={markNoRemainder}
+              disabled={saving}
+              className="btn-secondary h-10 px-4 text-sm whitespace-nowrap"
+              title="กดเพื่อบันทึกว่าไม่มีเศษ (0 ชิ้น)"
+            >
+              <Icon name="block" className="text-base" />
+              ไม่มีเศษ
+            </button>
+          </div>
+        )}
+        {doc.remainder_pcs === 0 && (
+          <p className="text-[11px] text-success mt-2 flex items-center gap-1">
+            <Icon name="check_circle" className="text-sm" />
+            บันทึกแล้วว่าไม่มีเศษ
+          </p>
         )}
         {err && (
           <p className="text-xs text-error mt-2">{err}</p>
