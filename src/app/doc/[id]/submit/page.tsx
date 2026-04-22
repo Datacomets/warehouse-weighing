@@ -110,6 +110,9 @@ export default async function SubmitPage({ params }: { params: { id: string } })
               <div className="text-[10px] text-outline">ชิ้นรวม</div>
             </div>
           </div>
+          <div className="mt-3 pt-3 border-t border-outline-variant/40 text-center text-sm">
+            ({qtyPerCarton} x {fullCartons} ลัง) + เศษ {remainderPcs} = {totalPcs.toLocaleString()} ชิ้น
+          </div>
         </div>
       )}
 
