@@ -58,37 +58,15 @@ export default async function SubmitPage({ params }: { params: { id: string } })
 
       <div className="card">
         <span className="section-title">Checklist ก่อนส่งงาน</span>
-        <ul className="mt-2 text-sm flex flex-col gap-1">
-          <li className={hasPcs ? "text-success" : "text-error"}>
-            {hasPcs ? "✓" : "✗"} ชั่ง Per Pcs
-            {doc.skip_per_pcs && (
-              <span className="text-outline text-xs ml-1">
-                (ข้าม: {doc.skip_reason_per_pcs || "ไม่ระบุเหตุผล"})
-              </span>
-            )}
-          </li>
-          <li className={hasInner ? "text-success" : "text-error"}>
-            {hasInner ? "✓" : "✗"} ชั่ง Per Inner/Tray/Bag
-            {doc.skip_per_inner && (
-              <span className="text-outline text-xs ml-1">
-                (ข้าม: {doc.skip_reason_per_inner || "ไม่ระบุเหตุผล"})
-              </span>
-            )}
-          </li>
-          <li className={hasCarton ? "text-success" : "text-error"}>
-            {hasCarton ? "✓" : "✗"} ชั่ง Per Carton (Grid)
-            {doc.skip_per_carton && (
-              <span className="text-outline text-xs ml-1">
-                (ข้าม: {doc.skip_reason_per_carton || "ไม่ระบุเหตุผล"})
-              </span>
-            )}
-          </li>
-          <li className={hasRemainder ? "text-success" : "text-error"}>
-            {hasRemainder ? "✓" : "✗"} นับเศษ (Remainder)
-            {doc.skip_per_carton && (
-              <span className="text-outline text-xs ml-1">(ไม่จำเป็น — ข้ามแท็บลังแล้ว)</span>
-            )}
-          </li>
+        <ul className="mt-2 text-sm flex flex-col gap-2">
+          <ChecklistItem ok={hasPcs} label="ชั่ง Per Pcs" skipReason={doc.skip_per_pcs ? doc.skip_reason_per_pcs : null} />
+          <ChecklistItem ok={hasInner} label="ชั่ง Per Inner/Tray/Bag" skipReason={doc.skip_per_inner ? doc.skip_reason_per_inner : null} />
+          <ChecklistItem ok={hasCarton} label="ชั่ง Per Carton (Grid)" skipReason={doc.skip_per_carton ? doc.skip_reason_per_carton : null} />
+          <ChecklistItem
+            ok={hasRemainder}
+            label="นับเศษ (Remainder)"
+            note={doc.skip_per_carton ? "ไม่จำเป็น — ข้ามแท็บลังแล้ว" : undefined}
+          />
         </ul>
       </div>
 
@@ -127,5 +105,35 @@ export default async function SubmitPage({ params }: { params: { id: string } })
         canRecall={doc.status === "pending_sap" && doc.submitted_by === profile?.id}
       />
     </div>
+  );
+}
+
+function ChecklistItem({
+  ok,
+  label,
+  skipReason,
+  note,
+}: {
+  ok: boolean;
+  label: string;
+  skipReason?: string | null;
+  note?: string;
+}) {
+  return (
+    <li className="flex items-start gap-2">
+      <Icon
+        name={ok ? "check_circle" : "cancel"}
+        className={ok ? "text-success text-lg mt-0.5" : "text-error text-lg mt-0.5"}
+      />
+      <div className="flex-1 min-w-0">
+        <span className={ok ? "text-on-surface" : "text-error"}>{label}</span>
+        {skipReason && (
+          <div className="text-outline text-xs mt-0.5">
+            ข้าม: <span className="italic">{skipReason}</span>
+          </div>
+        )}
+        {note && <div className="text-outline text-xs mt-0.5">{note}</div>}
+      </div>
+    </li>
   );
 }

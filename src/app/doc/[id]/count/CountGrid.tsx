@@ -88,7 +88,7 @@ export function CountGrid({
                   }}
                   onBlur={() => persist(r, c, cells[k] || "")}
                   className={clsx(
-                    "w-16 h-10 text-center text-sm rounded focus:outline-none focus:ring-2",
+                    "w-16 h-12 text-center text-base rounded focus:outline-none focus:ring-2",
                     cells[k] && isOutlier(Number(cells[k]), s)
                       ? "border-2 border-error bg-error-container/30 text-error focus:ring-error"
                       : "border border-outline-variant/40 bg-surface-container-low focus:ring-primary"

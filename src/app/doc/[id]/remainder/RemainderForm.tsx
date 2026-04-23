@@ -65,6 +65,9 @@ export function RemainderForm({
     await persistRemainder(0, "บันทึกว่าไม่มีเศษ");
   }
 
+  // Shows the "no remainder" badge when saved value is 0 AND operator hasn't started editing
+  const markedNoRemainder = doc.remainder_pcs === 0 && remainderPcs === "0";
+
   return (
     <>
       <Toast message={toast.msg} />
@@ -93,13 +96,13 @@ export function RemainderForm({
             placeholder="เช่น 45"
           />
         </Field>
-        {!readOnly && (
+        {!readOnly && !markedNoRemainder && (
           <div className="flex gap-2 mt-3">
             <button
               type="button"
               onClick={save}
               disabled={saving}
-              className="btn-primary flex-1 h-10 text-sm"
+              className="btn-primary flex-1 h-11 text-sm"
             >
               {saving ? "กำลังบันทึก..." : "บันทึกจำนวนเศษ"}
             </button>
@@ -107,7 +110,7 @@ export function RemainderForm({
               type="button"
               onClick={markNoRemainder}
               disabled={saving}
-              className="btn-secondary h-10 px-4 text-sm whitespace-nowrap"
+              className="btn-secondary h-11 px-4 text-sm whitespace-nowrap"
               title="กดเพื่อบันทึกว่าไม่มีเศษ (0 ชิ้น)"
             >
               <Icon name="block" className="text-base" />
@@ -115,11 +118,24 @@ export function RemainderForm({
             </button>
           </div>
         )}
-        {doc.remainder_pcs === 0 && (
-          <p className="text-[11px] text-success mt-2 flex items-center gap-1">
-            <Icon name="check_circle" className="text-sm" />
-            บันทึกแล้วว่าไม่มีเศษ
-          </p>
+        {markedNoRemainder && (
+          <div className="mt-3 flex items-center justify-between gap-2 bg-success/10 border border-success/30 rounded-xl px-3 py-2">
+            <span className="text-xs text-success flex items-center gap-1">
+              <Icon name="check_circle" className="text-sm" />
+              บันทึกแล้วว่าไม่มีเศษ
+            </span>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setRemainderPcs("")}
+                className="btn-secondary h-9 px-3 text-xs"
+                title="แก้ไขเพื่อกรอกจำนวนเศษใหม่"
+              >
+                <Icon name="edit" className="text-base" />
+                แก้ไข
+              </button>
+            )}
+          </div>
         )}
         {err && (
           <p className="text-xs text-error mt-2">{err}</p>

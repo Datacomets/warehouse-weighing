@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { SectionHeader } from "@/components/Field";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { translateSupabaseError } from "@/lib/supabaseError";
 
 interface ItemRow {
@@ -21,6 +22,7 @@ const CHUNK_SIZE = 500;
 export function ItemsAdmin({ initialItems }: { initialItems: ItemRow[] }) {
   const router = useRouter();
   const supabase = createClient();
+  const { confirm, DialogElement } = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<ItemRow[]>(initialItems);
@@ -116,7 +118,13 @@ export function ItemsAdmin({ initialItems }: { initialItems: ItemRow[] }) {
   }
 
   async function deleteRow(code: string) {
-    if (!confirm(`ลบ ${code} ?`)) return;
+    const ok = await confirm({
+      title: `ลบรหัสสินค้า ${code}?`,
+      message: "รายการจะถูกลบออกจากฐานข้อมูล item_master",
+      confirmLabel: "ลบ",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("item_master").delete().eq("item_code", code);
     if (error) {
       setErr(translateSupabaseError(error));
@@ -127,6 +135,7 @@ export function ItemsAdmin({ initialItems }: { initialItems: ItemRow[] }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {DialogElement}
       <div className="card border-l-4 border-primary-container">
         <SectionHeader icon="upload_file" title="นำเข้าจาก SAP Export (CSV)" accent />
         <p className="text-[11px] text-outline mb-3">

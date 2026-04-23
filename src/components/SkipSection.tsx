@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "./Icon";
 import { Toast, useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 import { translateSupabaseError } from "@/lib/supabaseError";
 
 type SkipKind = "per_pcs" | "per_inner" | "per_carton";
@@ -28,12 +29,16 @@ const REASON_OPTIONS: Record<SkipKind, { value: string; label: string }[]> = {
   ],
 };
 
-function reasonLabel(kind: SkipKind, storedReason: string | null): string {
-  if (!storedReason) return "ไม่ระบุเหตุผล";
+function parseReason(
+  kind: SkipKind,
+  storedReason: string | null
+): { text: string; freeForm: boolean } {
+  if (!storedReason) return { text: "ไม่ระบุเหตุผล", freeForm: false };
   const opts = REASON_OPTIONS[kind];
-  const match = opts.find((o) => storedReason.startsWith(o.label));
-  if (match) return storedReason;
-  return storedReason;
+  const isPreset = opts.some((o) => storedReason === o.label);
+  if (isPreset) return { text: storedReason, freeForm: false };
+  const freeTextOnly = storedReason.replace(/^อื่นๆ:\s*/, "");
+  return { text: freeTextOnly, freeForm: true };
 }
 
 export function SkipSection({
@@ -55,6 +60,7 @@ export function SkipSection({
   const router = useRouter();
   const supabase = createClient();
   const toast = useToast();
+  const { confirm, DialogElement } = useConfirm();
   const [expanded, setExpanded] = useState(false);
   const [choice, setChoice] = useState<string>("");
   const [freeText, setFreeText] = useState("");
@@ -76,9 +82,13 @@ export function SkipSection({
       return;
     }
     if (hasData) {
-      const ok = confirm(
-        "ส่วนนี้มีข้อมูลที่ชั่งไว้แล้ว — หากยืนยันการข้าม ข้อมูลจะยังอยู่แต่ถูกละเว้นจากการส่งงาน ต้องการดำเนินการต่อหรือไม่?"
-      );
+      const ok = await confirm({
+        title: "ข้ามส่วนนี้หรือไม่?",
+        message:
+          "ส่วนนี้มีข้อมูลที่ชั่งไว้แล้ว — ข้อมูลจะยังอยู่แต่ถูกละเว้นจากการส่งงาน",
+        confirmLabel: "ยืนยันข้าม",
+        destructive: true,
+      });
       if (!ok) return;
     }
     const reasonText =
@@ -117,9 +127,11 @@ export function SkipSection({
   }
 
   if (initialSkipped) {
+    const parsed = parseReason(kind, initialReason);
     return (
       <div className="card border-l-4 border-outline bg-surface-container-low">
         <Toast message={toast.msg} />
+        {DialogElement}
         <div className="flex items-center gap-2">
           <Icon name="block" className="text-outline" />
           <span className="section-title flex-1">ข้ามส่วนนี้</span>
@@ -128,7 +140,7 @@ export function SkipSection({
               type="button"
               onClick={undoSkip}
               disabled={saving}
-              className="btn-secondary h-9 px-3 text-xs"
+              className="btn-secondary h-11 px-4 text-xs"
             >
               <Icon name="undo" className="text-base" />
               ยกเลิกการข้าม
@@ -136,7 +148,15 @@ export function SkipSection({
           )}
         </div>
         <p className="text-xs text-outline mt-2">
-          เหตุผล: <span className="text-on-surface-variant">{reasonLabel(kind, initialReason)}</span>
+          เหตุผล:{" "}
+          {parsed.freeForm ? (
+            <span className="text-on-surface-variant italic">
+              &ldquo;{parsed.text}&rdquo;
+              <span className="text-[10px] text-outline not-italic ml-1">(ระบุเอง)</span>
+            </span>
+          ) : (
+            <span className="text-on-surface-variant">{parsed.text}</span>
+          )}
         </p>
         {err && <p className="text-xs text-error mt-2">{err}</p>}
       </div>
@@ -150,6 +170,7 @@ export function SkipSection({
   return (
     <div className="card border-dashed border border-outline-variant/50">
       <Toast message={toast.msg} />
+      {DialogElement}
       {!expanded ? (
         <button
           type="button"

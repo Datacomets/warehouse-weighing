@@ -7,6 +7,7 @@ import { isOutlier } from "@/lib/outlier";
 import { StatsCard } from "./StatsCard";
 import { Icon } from "./Icon";
 import { Toast, useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 import { clsx } from "clsx";
 import { useScale } from "@/lib/useScale";
 
@@ -49,6 +50,7 @@ export function WeightEntry({
   const [unit, setUnit] = useState<WeightUnit>(initialUnit);
   const [, startTransition] = useTransition();
   const toast = useToast();
+  const { confirm, DialogElement } = useConfirm();
   const scale = useScale({
     onReading: (value) => {
       setDraft(String(value));
@@ -120,7 +122,13 @@ export function WeightEntry({
   }
 
   async function removeValue(id: string) {
-    if (!confirm("ต้องการลบค่านี้หรือไม่?")) return;
+    const ok = await confirm({
+      title: "ลบค่านี้หรือไม่?",
+      message: "ค่าที่บันทึกไว้จะถูกลบออกจากรายการ",
+      confirmLabel: "ลบ",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("weight_measurements").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -157,6 +165,7 @@ export function WeightEntry({
   return (
     <div className="flex flex-col gap-4">
       <Toast message={toast.msg} variant={toast.variant} />
+      {DialogElement}
       {/* เลือกหน่วยวัด */}
       <div className="card">
         <span className="section-title">หน่วยวัด</span>

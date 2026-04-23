@@ -35,33 +35,46 @@ export function StepNav({
         const active = path === href || path.startsWith(href);
         const done = !!completed[s.key];
         const locked = s.key === "submit" && !canSubmit && !done;
-        return (
-          <Link
-            key={s.key}
-            href={href}
-            className={clsx(
-              "px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold border transition-colors flex items-center gap-1",
-              active
-                ? "bg-primary-container text-on-primary border-primary-container"
-                : done
-                ? "bg-success/10 text-success border-success/30"
-                : locked
-                ? "bg-surface-container-low text-on-surface-variant/50 border-outline-variant/20"
-                : "bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:bg-surface-container"
-            )}
-          >
+        const className = clsx(
+          "px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold border transition-colors flex items-center gap-1",
+          active
+            ? "bg-primary-container text-on-primary border-primary-container"
+            : done
+            ? "bg-success/10 text-success border-success/30"
+            : locked
+            ? "bg-surface-container-low text-on-surface-variant/50 border-outline-variant/20 cursor-not-allowed"
+            : "bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:bg-surface-container"
+        );
+        const content = (
+          <>
             {done && !active && (
               <Icon name="check_circle" className="text-success text-sm" />
             )}
             {locked && (
-              <span title={`ทำครบ ${doneCount}/${REQUIRED_STEPS.length} ขั้นตอนก่อนจึงจะส่งงานได้`}>
-                <Icon name="lock" className="text-on-surface-variant/50 text-sm" />
-              </span>
+              <Icon name="lock" className="text-on-surface-variant/50 text-sm" />
             )}
             {i + 1}. {s.label}
             {locked && (
               <span className="text-[10px] font-normal opacity-60">{doneCount}/{REQUIRED_STEPS.length}</span>
             )}
+          </>
+        );
+        if (locked) {
+          return (
+            <span
+              key={s.key}
+              role="link"
+              aria-disabled="true"
+              title={`ทำครบ ${doneCount}/${REQUIRED_STEPS.length} ขั้นตอนก่อนจึงจะส่งงานได้`}
+              className={className}
+            >
+              {content}
+            </span>
+          );
+        }
+        return (
+          <Link key={s.key} href={href} className={className}>
+            {content}
           </Link>
         );
       })}

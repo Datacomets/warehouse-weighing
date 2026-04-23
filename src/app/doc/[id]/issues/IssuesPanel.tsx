@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { Field } from "@/components/Field";
 import { Toast, useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { ISSUE_TYPES, DEFECT_CODES } from "@/lib/mock-erp";
 import { fmtDateTime } from "@/lib/stats";
 import { createIssue, deleteIssue, uploadIssuePhoto } from "@/lib/issueActions";
@@ -22,6 +23,7 @@ export function IssuesPanel({
   initial: any[];
 }) {
   const supabase = createClient();
+  const { confirm, DialogElement } = useConfirm();
   const [issues, setIssues] = useState<any[]>(initial);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({
@@ -66,7 +68,13 @@ export function IssuesPanel({
   }
 
   async function remove(id: string) {
-    if (!confirm("ต้องการลบรายการปัญหานี้หรือไม่?")) return;
+    const ok = await confirm({
+      title: "ลบรายการปัญหานี้?",
+      message: "รูปภาพและรายละเอียดที่แนบไว้จะถูกลบตามไปด้วย",
+      confirmLabel: "ลบ",
+      destructive: true,
+    });
+    if (!ok) return;
     const result = await deleteIssue(supabase, id);
     if (!result.ok) {
       toast.error(result.error);
@@ -78,6 +86,7 @@ export function IssuesPanel({
   return (
     <div className="flex flex-col gap-4">
       <Toast message={toast.msg} variant={toast.variant} />
+      {DialogElement}
       {!readOnly && !open && (
         <button onClick={() => setOpen(true)} className="btn-primary self-start">
           <Icon name="add_alert" filled />
