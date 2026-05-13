@@ -20,7 +20,7 @@ export default function PdfDownloadButtons({
     <>
       <PDFDownloadLink
         document={
-          <WeightSheetPdf doc={doc} perPcs={perPcs} perInner={perInner} perCarton={perCarton} />
+          <WeightSheetPdf doc={doc} grid={grid} perPcs={perPcs} perInner={perInner} perCarton={perCarton} />
         }
         fileName={`${doc.wh_number}-weight.pdf`}
         className="btn-primary"

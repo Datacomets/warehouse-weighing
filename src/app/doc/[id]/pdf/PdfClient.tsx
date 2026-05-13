@@ -107,7 +107,7 @@ export function PdfClient({
           <p><b>เริ่ม:</b> {fmtDateTime(doc.started_at)}</p>
           <p><b>สิ้นสุด:</b> {fmtDateTime(doc.ended_at)}</p>
           <p><b>Lead Time:</b> {leadTimeText(doc.started_at, doc.ended_at)}</p>
-          <p><b>Cartons ชั่งแล้ว:</b> {cartonCount} ลัง + เศษ {remainderPcs} ชิ้น = {totalPcs.toLocaleString()} ชิ้น</p>
+          <p><b>Cartons ชั่งแล้ว:</b> ({doc.qty_per_carton ?? 0} x {cartonCount} ลัง) + เศษ {remainderPcs} = {totalPcs.toLocaleString()} ชิ้น</p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 mt-8">

@@ -1,7 +1,7 @@
 "use client";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
-import { countGridStats, reorganizeGridToRows } from "@/lib/documentSummary";
+import { countGridStats, reorganizeGridToRows, totalPiecesCount } from "@/lib/documentSummary";
 
 const styles = StyleSheet.create({
   page: { padding: 28, fontSize: 10, fontFamily: "Helvetica", color: "#191c1d" },
@@ -23,7 +23,14 @@ const styles = StyleSheet.create({
   small2: { fontSize: 9, marginBottom: 2 },
 });
 
-export function WeightSheetPdf({ doc, perPcs, perInner, perCarton }: any) {
+export function WeightSheetPdf({ doc, grid, perPcs, perInner, perCarton }: any) {
+  const cartonCount = Array.isArray(grid) ? grid.length : Number(doc.actual_count) || 0;
+  const remainderPcs = Number(doc.remainder_pcs) || 0;
+  const totalPcs = totalPiecesCount({
+    qtyPerCarton: doc.qty_per_carton,
+    cartonCount,
+    remainderPcs,
+  });
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -73,6 +80,9 @@ export function WeightSheetPdf({ doc, perPcs, perInner, perCarton }: any) {
           <Text style={styles.small2}>เริ่ม: {fmtDateTime(doc.started_at)}</Text>
           <Text style={styles.small2}>สิ้นสุด: {fmtDateTime(doc.ended_at)}</Text>
           <Text style={styles.small2}>Lead Time: {leadTimeText(doc.started_at, doc.ended_at)}</Text>
+          <Text style={styles.small2}>
+            Cartons ชั่งแล้ว: ({doc.qty_per_carton ?? 0} x {cartonCount} ลัง) + เศษ {remainderPcs} = {totalPcs.toLocaleString()} ชิ้น
+          </Text>
           <Text style={styles.small2}>หมายเหตุ: {doc.remarks || "-"}</Text>
         </View>
 
