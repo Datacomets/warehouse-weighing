@@ -5,6 +5,7 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { Icon } from "@/components/Icon";
 import { UsersAdmin } from "./UsersAdmin";
+import { ExportFab } from "@/components/ExportFab";
 import { canManageUsers } from "@/lib/permissions";
 
 export default async function UsersPage() {
@@ -38,6 +39,7 @@ export default async function UsersPage() {
 
         <UsersAdmin users={(users || []) as any} />
       </main>
+      <ExportFab />
       <BottomNav role={profile.role} />
     </>
   );
