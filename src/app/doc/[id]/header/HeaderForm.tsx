@@ -23,6 +23,12 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
   const [dateErr, setDateErr] = useState<string | null>(null);
 
   const initial = {
+    lot: doc.lot || "",
+    po_number: doc.po_number || "",
+    item_code: doc.item_code || "",
+    description: doc.description || "",
+    supplier: doc.supplier || "",
+    delivery_date: doc.delivery_date || "",
     scale_name: doc.scale_name || "",
     qty_per_carton: doc.qty_per_carton ?? "",
     width_cm: doc.width_cm ?? "",
@@ -37,8 +43,38 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
     remarks: doc.remarks || "",
   };
   const [f, setF] = useState(initial);
+  const [lookupMsg, setLookupMsg] = useState<string | null>(null);
   const initialRef = useRef(initial);
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function lookupItemCode(code: string) {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setLookupMsg(null);
+      return;
+    }
+    const { data, error } = await supabase
+      .from("item_master")
+      .select("description, product_category, obsolete")
+      .eq("item_code", trimmed)
+      .maybeSingle();
+    if (error) {
+      setLookupMsg("ค้นหา Item Code ไม่สำเร็จ");
+      return;
+    }
+    if (data?.description) {
+      setF((prev) => ({ ...prev, description: data.description }));
+      setDirty(true);
+      const cat = data.product_category ? ` · ${data.product_category}` : "";
+      if (data.obsolete) {
+        setLookupMsg(`⚠ Item นี้ถูกยกเลิก (Obsolete)${cat}`);
+      } else {
+        setLookupMsg(`พบใน Item Master — กรอก Description ให้แล้ว${cat}`);
+      }
+    } else {
+      setLookupMsg("ไม่พบ Item Code นี้ใน Master — กรุณากรอก Description เอง");
+    }
+  }
 
   function update<K extends keyof typeof f>(key: K, value: (typeof f)[K]) {
     setF((prev) => ({ ...prev, [key]: value }));
@@ -47,6 +83,12 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
 
   function buildPayload(state: typeof f) {
     return {
+      lot: state.lot,
+      po_number: state.po_number,
+      item_code: state.item_code,
+      description: state.description,
+      supplier: state.supplier,
+      delivery_date: state.delivery_date || null,
       scale_name: state.scale_name,
       qty_per_carton: state.qty_per_carton === "" ? null : Number(state.qty_per_carton),
       width_cm: state.width_cm === "" ? null : Number(state.width_cm),
@@ -143,14 +185,81 @@ export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
       }}
       className="flex flex-col gap-5 pb-32"
     >
-      <div className="card">
-        <span className="section-title">ข้อมูลจาก Header (อ่านอย่างเดียว)</span>
-        <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
-          <div><b>LOT:</b> {doc.lot}</div>
-          <div><b>PO:</b> {doc.po_number}</div>
-          <div className="col-span-2"><b>Item:</b> {doc.item_code} — {doc.description}</div>
-          <div className="col-span-2"><b>ชื่อสินค้าฝั่ง Supplier:</b> {doc.supplier || "-"}</div>
-        </div>
+      <SectionHeader icon="description" title="ข้อมูลพื้นฐาน" accent />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="LOT" required>
+          <input
+            disabled={readOnly}
+            value={f.lot}
+            onChange={(e) => update("lot", e.target.value)}
+            onBlur={autoSave}
+            className="input-base"
+          />
+        </Field>
+        <Field label="PO Number" required>
+          <input
+            disabled={readOnly}
+            value={f.po_number}
+            onChange={(e) => update("po_number", e.target.value)}
+            onBlur={autoSave}
+            className="input-base"
+          />
+        </Field>
+        <Field label="Item Code (SAP)" required className="col-span-2">
+          <input
+            disabled={readOnly}
+            value={f.item_code}
+            onChange={(e) => {
+              update("item_code", e.target.value);
+              setLookupMsg(null);
+            }}
+            onBlur={async (e) => {
+              await lookupItemCode(e.target.value);
+              autoSave();
+            }}
+            className="input-base"
+            placeholder="กรอกแล้ว tab ออก เพื่อดึง Description"
+          />
+          {lookupMsg ? (
+            <p className="text-[11px] text-outline mt-1">{lookupMsg}</p>
+          ) : (
+            <p className="text-[11px] text-outline mt-1">
+              กรอก Item Code แล้วแตะที่อื่น เพื่อดึง Description จาก Item Master
+            </p>
+          )}
+        </Field>
+        <Field label="Description" required className="col-span-2">
+          <input
+            disabled={readOnly}
+            value={f.description}
+            onChange={(e) => update("description", e.target.value)}
+            onBlur={autoSave}
+            className="input-base"
+          />
+        </Field>
+        <Field
+          label="ชื่อสินค้าฝั่ง Supplier"
+          hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้"
+          className="col-span-2"
+        >
+          <input
+            disabled={readOnly}
+            value={f.supplier}
+            onChange={(e) => update("supplier", e.target.value)}
+            onBlur={autoSave}
+            className="input-base"
+          />
+        </Field>
+        <Field label="Delivery Date" className="col-span-2">
+          <input
+            disabled={readOnly}
+            type="date"
+            value={f.delivery_date}
+            onChange={(e) => update("delivery_date", e.target.value)}
+            onBlur={autoSave}
+            className="input-base"
+          />
+        </Field>
       </div>
 
       <SectionHeader icon="balance" title="ข้อมูลการชั่ง" accent />
