@@ -22,14 +22,14 @@ export function fmtDate(s: string | null | undefined) {
   if (!s) return "-";
   const d = new Date(s);
   if (isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString("th-TH-u-ca-gregory", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export function fmtDateTime(s: string | null | undefined) {
   if (!s) return "-";
   const d = new Date(s);
   if (isNaN(d.getTime())) return s;
-  return d.toLocaleString("th-TH", {
+  return d.toLocaleString("th-TH-u-ca-gregory", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
