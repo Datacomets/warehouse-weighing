@@ -3,6 +3,7 @@ import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { TopAppBar } from "@/components/TopAppBar";
 import { BottomNav } from "@/components/BottomNav";
 import { DashboardCharts } from "./DashboardCharts";
+import { ExportFab } from "@/components/ExportFab";
 import { Icon } from "@/components/Icon";
 import { logger } from "@/lib/logger";
 import {
@@ -72,6 +73,7 @@ export default async function DashboardPage() {
           kpi={KPI_LEAD_TIME_MINUTES}
         />
       </main>
+      <ExportFab role={profile.role} />
       <BottomNav role={profile.role} />
     </>
   );

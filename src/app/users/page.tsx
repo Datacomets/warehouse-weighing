@@ -39,7 +39,7 @@ export default async function UsersPage() {
 
         <UsersAdmin users={(users || []) as any} />
       </main>
-      <ExportFab />
+      <ExportFab role={profile.role} />
       <BottomNav role={profile.role} />
     </>
   );

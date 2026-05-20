@@ -6,6 +6,8 @@ import { Toast, useToast } from "./Toast";
 import { buildCsv, downloadCsv } from "@/lib/exportCsv";
 import { stats } from "@/lib/stats";
 import { translateSupabaseError } from "@/lib/supabaseError";
+import { canExportReport } from "@/lib/permissions";
+import type { UserRole } from "@/lib/types";
 
 const STATUS_LABEL: Record<string, string> = {
   in_progress: "กำลังดำเนินการ",
@@ -79,10 +81,12 @@ function fmt3(n: number): string {
   return n.toFixed(3);
 }
 
-export function ExportFab() {
+export function ExportFab({ role }: { role: UserRole }) {
   const supabase = createClient();
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+
+  if (!canExportReport(role)) return null;
 
   async function handleExport() {
     if (busy) return;

@@ -9,6 +9,7 @@ export const ADMIN_QUEUE_ROLES: readonly UserRole[] = ["admin_sap", "admin", "qc
 export const TEAM_ROLES: readonly UserRole[] = ["qc", "manager", "admin"];
 export const ITEM_MASTER_ROLES: readonly UserRole[] = ["admin", "admin_sap"];
 export const DASHBOARD_ROLES: readonly UserRole[] = ["qc", "manager", "admin_sap", "admin"];
+export const EXPORT_REPORT_ROLES: readonly UserRole[] = ["admin", "admin_sap", "manager"];
 
 export function canAccessAdminQueue(role: UserRole): boolean {
   return ADMIN_QUEUE_ROLES.includes(role);
@@ -28,6 +29,10 @@ export function canAccessDashboard(role: UserRole): boolean {
 
 export function canManageUsers(role: UserRole): boolean {
   return role === "admin";
+}
+
+export function canExportReport(role: UserRole): boolean {
+  return EXPORT_REPORT_ROLES.includes(role);
 }
 
 /** Only operators are scoped to their own documents on /home. */

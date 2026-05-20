@@ -9,6 +9,7 @@ import { clsx } from "clsx";
 import { startOfDayTH, endOfDayTH } from "@/lib/dateUtils";
 import { logger } from "@/lib/logger";
 import { canAccessAdminQueue } from "@/lib/permissions";
+import { ExportFab } from "@/components/ExportFab";
 
 type Tab = "pending" | "working" | "done_today" | "all";
 
@@ -171,6 +172,7 @@ export default async function AdminPage({
           />
         )}
       </main>
+      <ExportFab role={profile.role} />
       <BottomNav role={profile.role} />
     </>
   );
