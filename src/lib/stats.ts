@@ -18,13 +18,28 @@ export function fmt(n: number, digits = 3) {
   });
 }
 
+/**
+ * Date-only date strings (YYYY-MM-DD) from Postgres `date` columns parse as
+ * UTC midnight. We force the Thai timezone so they render as the same
+ * calendar day regardless of where the code runs (browser, Vercel UTC fn).
+ */
 export function fmtDate(s: string | null | undefined) {
   if (!s) return "-";
   const d = new Date(s);
   if (isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("th-TH-u-ca-gregory", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString("th-TH-u-ca-gregory", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  });
 }
 
+/**
+ * Timestamps from Postgres `timestamptz` are stored in UTC. We render them
+ * in Thai timezone with a 24-hour clock so e.g. 14:45 stays as 14:45
+ * (not "02:45 PM" without a marker).
+ */
 export function fmtDateTime(s: string | null | undefined) {
   if (!s) return "-";
   const d = new Date(s);
@@ -36,6 +51,7 @@ export function fmtDateTime(s: string | null | undefined) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: "Asia/Bangkok",
   });
 }
 
