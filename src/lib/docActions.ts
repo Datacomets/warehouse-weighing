@@ -75,6 +75,48 @@ export async function unlockDocument(
 }
 
 /**
+ * Admin-initiated reopen of a completed document: completed → in_progress.
+ * For late corrections after SAP entry (e.g. weight typo discovered later).
+ *
+ * Preserves CFSD / notification / attachment so the admin does not have to
+ * re-enter them when the doc is closed again — those values rarely change,
+ * only the underlying weight data does.
+ */
+export async function reopenCompletedDocument(
+  supabase: SupabaseClient,
+  {
+    docId,
+    userId,
+    reason,
+  }: { docId: string; userId: string | null; reason: string }
+): Promise<DocActionResult> {
+  if (!reason.trim()) {
+    return { ok: false, error: "กรุณากรอกเหตุผล" };
+  }
+
+  const { error } = await supabase
+    .from("gr_documents")
+    .update({
+      status: "in_progress",
+      unlock_reason: reason,
+      submitted_at: null,
+      ended_at: null,
+      closed_at: null,
+      closed_by: null,
+    })
+    .eq("id", docId);
+  if (error) return { ok: false, error: translateSupabaseError(error) };
+
+  await supabase.from("audit_log").insert({
+    document_id: docId,
+    actor: userId,
+    action: "reopen_completed",
+    detail: { reason },
+  });
+  return { ok: true };
+}
+
+/**
  * Operator-initiated recall: pending_sap → in_progress.
  * Only the submitter can recall, and only while still pending_sap.
  */

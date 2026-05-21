@@ -31,6 +31,16 @@ export function canUnlock(status: DocStatus): boolean {
 }
 
 /**
+ * Can admin reopen a `completed` doc back to `in_progress` for late
+ * corrections (e.g. weight typo discovered after SAP entry)? Distinct
+ * from canUnlock so the two flows can have different audit actions and
+ * different UI affordances.
+ */
+export function canReopen(status: DocStatus): boolean {
+  return status === "completed";
+}
+
+/**
  * Computes the next status given a current status + action, or `null` when the
  * transition is not allowed.
  */

@@ -7,8 +7,9 @@ import { Icon } from "@/components/Icon";
 import { fmt, fmtDate, fmtDateTime, leadTimeText, stats } from "@/lib/stats";
 import { SapEntryForm } from "./SapEntryForm";
 import { UnlockButton } from "./UnlockButton";
+import { ReopenButton } from "./ReopenButton";
 import { ISSUE_TYPES } from "@/lib/mock-erp";
-import { canAccessAdminQueue } from "@/lib/permissions";
+import { canAccessAdminQueue, canReopenCompleted } from "@/lib/permissions";
 import { clsx } from "clsx";
 
 export default async function AdminDocPage({ params }: { params: { id: string } }) {
@@ -185,13 +186,20 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
 
         {doc.status === "pending_sap" && <SapEntryForm doc={doc} userId={profile.id} />}
         {doc.status === "completed" && (
-          <div className="card border-l-4 border-success">
-            <span className="section-title">SAP Linked</span>
-            <p className="text-sm mt-1">
-              <b>CFSD:</b> {doc.sap_inbound_id} <br />
-              <b>ปิดงานเมื่อ:</b> {fmtDateTime(doc.closed_at)}
-            </p>
-          </div>
+          <>
+            <div className="card border-l-4 border-success">
+              <span className="section-title">SAP Linked</span>
+              <p className="text-sm mt-1">
+                <b>CFSD:</b> {doc.sap_inbound_id} <br />
+                <b>ปิดงานเมื่อ:</b> {fmtDateTime(doc.closed_at)}
+              </p>
+            </div>
+            {canReopenCompleted(profile.role) && (
+              <div className="flex gap-2">
+                <ReopenButton docId={doc.id} />
+              </div>
+            )}
+          </>
         )}
       </main>
     </>

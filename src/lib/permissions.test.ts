@@ -7,6 +7,7 @@ import {
   canAccessDashboard,
   canManageUsers,
   canExportReport,
+  canReopenCompleted,
   seesOnlyOwnDocuments,
   homeRouteFor,
 } from "./permissions";
@@ -64,6 +65,15 @@ describe("canExportReport()", () => {
   });
   it.each(["operator", "qc"] as const)("blocks %s", (role) => {
     expect(canExportReport(role)).toBe(false);
+  });
+});
+
+describe("canReopenCompleted()", () => {
+  it.each(["admin", "admin_sap"] as const)("allows %s", (role) => {
+    expect(canReopenCompleted(role)).toBe(true);
+  });
+  it.each(["operator", "qc", "manager"] as const)("blocks %s", (role) => {
+    expect(canReopenCompleted(role)).toBe(false);
   });
 });
 

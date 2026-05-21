@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { DocStatus } from "./types";
-import { canEdit, canSubmit, canEnterSap, canUnlock, nextStatus } from "./workflow";
+import { canEdit, canSubmit, canEnterSap, canUnlock, canReopen, nextStatus } from "./workflow";
 
 const ALL_STATUSES: DocStatus[] = ["in_progress", "pending_sap", "completed"];
 
@@ -23,6 +23,15 @@ describe("canEnterSap() / canUnlock()", () => {
   it.each(["in_progress", "completed"] as const)("block %s", (s) => {
     expect(canEnterSap(s)).toBe(false);
     expect(canUnlock(s)).toBe(false);
+  });
+});
+
+describe("canReopen()", () => {
+  it("allows completed only", () => {
+    expect(canReopen("completed")).toBe(true);
+  });
+  it.each(["in_progress", "pending_sap"] as const)("blocks %s", (s) => {
+    expect(canReopen(s)).toBe(false);
   });
 });
 
@@ -66,6 +75,7 @@ describe("workflow invariants", () => {
       expect(typeof canSubmit(s)).toBe("boolean");
       expect(typeof canEnterSap(s)).toBe("boolean");
       expect(typeof canUnlock(s)).toBe("boolean");
+      expect(typeof canReopen(s)).toBe("boolean");
     }
   });
 
