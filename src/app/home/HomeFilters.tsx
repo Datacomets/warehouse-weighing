@@ -38,7 +38,7 @@ export function HomeFilters({
           name="q"
           defaultValue={defaultQ}
           className="input-base h-14 pl-12"
-          placeholder="ค้นหา เลข WH-, LOT, หรือ Item Code..."
+          placeholder="ค้นหา WH-, LOT, PO, Item Code, Description..."
         />
       </form>
 

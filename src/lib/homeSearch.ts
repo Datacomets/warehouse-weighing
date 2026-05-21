@@ -4,6 +4,7 @@ export type HomeTab = "in_progress" | "completed";
 export const HOME_SEARCH_FIELDS = [
   "wh_number",
   "lot",
+  "po_number",
   "item_code",
   "description",
 ] as const;

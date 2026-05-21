@@ -90,8 +90,13 @@ describe("homeSearchOrExpression()", () => {
 
   it("matches current home/page.tsx output exactly (regression lock)", () => {
     expect(homeSearchOrExpression("test")).toBe(
-      "wh_number.ilike.%test%,lot.ilike.%test%,item_code.ilike.%test%,description.ilike.%test%"
+      "wh_number.ilike.%test%,lot.ilike.%test%,po_number.ilike.%test%,item_code.ilike.%test%,description.ilike.%test%"
     );
+  });
+
+  it("matches PO number queries (added per warehouse user request)", () => {
+    const expr = homeSearchOrExpression("5888");
+    expect(expr).toContain("po_number.ilike.%5888%");
   });
 
   it("trims whitespace before escaping", () => {
