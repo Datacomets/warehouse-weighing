@@ -208,6 +208,10 @@ export function SkipSection({
             />
           )}
           {err && <p className="text-xs text-error">{err}</p>}
+          <p className="text-[11px] text-error flex items-center gap-1 mt-1">
+            <Icon name="warning" className="text-sm" />
+            โปรดยืนยันการข้ามก่อนไปขั้นตอนถัดไป
+          </p>
           <div className="flex gap-2 mt-1">
             <button
               type="button"
