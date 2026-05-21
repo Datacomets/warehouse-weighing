@@ -12,6 +12,17 @@ import { ISSUE_TYPES } from "@/lib/mock-erp";
 import { canAccessAdminQueue, canReopenCompleted } from "@/lib/permissions";
 import { clsx } from "clsx";
 
+/** Human-readable Thai labels for audit_log action codes. */
+const ACTION_LABEL: Record<string, string> = {
+  create_doc: "สร้างเอกสาร",
+  edit_header: "แก้ไข Header",
+  submit_work: "ส่งงาน",
+  complete_sap: "นำเข้า SAP",
+  unlock: "ปลดล็อกเพื่อแก้ไข",
+  reopen_completed: "เปิดเอกสารใหม่ (post-SAP)",
+  recall_submission: "ถอนส่งงาน",
+};
+
 export default async function AdminDocPage({ params }: { params: { id: string } }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
@@ -23,13 +34,34 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
     { data: weightItems },
     { data: gridEntries },
     { data: issues },
+    { data: auditLog },
   ] = await Promise.all([
     supabase.from("gr_documents").select("*").eq("id", params.id).single(),
     supabase.from("weight_measurements").select("*").eq("document_id", params.id).order("seq"),
     supabase.from("count_grid_entries").select("*").eq("document_id", params.id).order("row_index").order("col_index"),
     supabase.from("issue_reports").select("*").eq("document_id", params.id).order("created_at", { ascending: false }),
+    supabase.from("audit_log").select("id,action,detail,actor,created_at").eq("document_id", params.id).order("created_at", { ascending: false }),
   ]);
   if (!doc) notFound();
+
+  // Resolve user names for the workflow card + audit timeline.
+  const userIds = new Set<string>();
+  if (doc.created_by) userIds.add(doc.created_by);
+  if (doc.submitted_by) userIds.add(doc.submitted_by);
+  if (doc.closed_by) userIds.add(doc.closed_by);
+  for (const entry of auditLog || []) {
+    if (entry.actor) userIds.add(entry.actor);
+  }
+  const { data: profiles } = userIds.size > 0
+    ? await supabase.from("profiles").select("id,full_name,role").in("id", Array.from(userIds))
+    : { data: [] as { id: string; full_name: string; role: string }[] };
+  const userMap = new Map<string, { full_name: string; role: string }>();
+  for (const p of profiles || []) userMap.set(p.id, { full_name: p.full_name, role: p.role });
+  function userLabel(id: string | null | undefined): string {
+    if (!id) return "—";
+    const u = userMap.get(id);
+    return u ? `${u.full_name} (${u.role})` : "—";
+  }
 
   const unitLabel = doc.weight_unit === "g" ? "g" : doc.weight_unit === "pcs" ? "ชิ้น" : "kg";
 
@@ -166,14 +198,65 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
         {/* Workflow */}
         <div className="card text-xs">
           <span className="section-title">Workflow</span>
-          <p className="mt-2">
-            <b>ส่งโดย:</b> {doc.submitted_by ? "พนักงาน" : "-"} ·{" "}
-            <b>เวลา:</b> {fmtDateTime(doc.submitted_at)}
-          </p>
-          <p>
-            <b>Lead Time:</b>{" "}
-            {leadTimeText(doc.started_at, doc.submitted_at || doc.ended_at)}
-          </p>
+          <div className="mt-2 flex flex-col gap-1">
+            <p>
+              <b>สร้างโดย:</b> {userLabel(doc.created_by)} ·{" "}
+              <span className="text-outline">{fmtDateTime(doc.created_at)}</span>
+            </p>
+            <p>
+              <b>ส่งโดย:</b> {userLabel(doc.submitted_by)} ·{" "}
+              <span className="text-outline">{fmtDateTime(doc.submitted_at)}</span>
+            </p>
+            <p>
+              <b>ปิดโดย:</b> {userLabel(doc.closed_by)} ·{" "}
+              <span className="text-outline">{fmtDateTime(doc.closed_at)}</span>
+            </p>
+            <p>
+              <b>Lead Time:</b>{" "}
+              {leadTimeText(doc.started_at, doc.closed_at || doc.submitted_at || doc.ended_at)}
+            </p>
+            {doc.unlock_reason && (
+              <p className="bg-tertiary-container/30 px-2 py-1 rounded mt-1">
+                <b>เหตุผลปลดล็อก/แก้ไขล่าสุด:</b>{" "}
+                <span className="italic">&ldquo;{doc.unlock_reason}&rdquo;</span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Audit log timeline */}
+        <div className="card text-xs">
+          <span className="section-title">ประวัติการดำเนินการ ({(auditLog || []).length})</span>
+          {(auditLog || []).length === 0 ? (
+            <p className="text-outline text-center py-2 mt-2">ยังไม่มีบันทึก</p>
+          ) : (
+            <div className="mt-2 flex flex-col gap-1">
+              {(auditLog || []).map((entry: any) => (
+                <div
+                  key={entry.id}
+                  className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 py-1.5 border-b border-outline-variant/20 last:border-0"
+                >
+                  <span className="text-outline whitespace-nowrap font-mono text-[10px]">
+                    {fmtDateTime(entry.created_at)}
+                  </span>
+                  <span className="font-medium">{userLabel(entry.actor)}</span>
+                  <span className="text-on-surface-variant">
+                    → {ACTION_LABEL[entry.action] || entry.action}
+                  </span>
+                  {entry.detail?.reason && (
+                    <span className="text-outline italic">
+                      &ldquo;{String(entry.detail.reason)}&rdquo;
+                    </span>
+                  )}
+                  {entry.detail?.sap_inbound_id && (
+                    <span className="text-on-surface-variant">
+                      ({String(entry.detail.sap_inbound_id)})
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
