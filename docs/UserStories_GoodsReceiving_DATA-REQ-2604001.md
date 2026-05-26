@@ -5,13 +5,25 @@
 
 | รายการ | รายละเอียด |
 |---|---|
-| **อ้างอิง PRD** | DATA-REQ-2604001 v2.5 |
-| **เวอร์ชัน** | 1.5 |
-| **วันที่** | 21 พฤษภาคม 2569 |
+| **อ้างอิง PRD** | DATA-REQ-2604001 v2.6 |
+| **เวอร์ชัน** | 1.6 |
+| **วันที่** | 26 พฤษภาคม 2569 |
 
 ---
 
 ## Changelog
+
+### 26 พฤษภาคม 2569 (v1.6) — Admin/Manager Direct Edit on Completed
+
+- **แก้ US-109 ใหม่หมด** — เปลี่ยนจาก "Reopen completed (reset status)" → "Edit completed in place (no status change)"
+  - เพิ่มสิทธิ์ **Manager** (เดิม admin + admin_sap)
+  - ปุ่ม "แก้ไขเอกสาร" → "**แก้ไขข้อมูล (status ไม่เปลี่ยน)**" บน `/admin/[id]`
+  - คลิกแล้ว Link ตรงไป `/doc/[id]/header` (ไม่เปลี่ยน status, ไม่เคลียร์ closed_at / closed_by / submitted_at)
+  - เอกสารไม่กลับไปแสดงในงานของ operator
+  - Banner สีส้มเตือนบนหน้า `/doc/[id]/*` ขณะแก้ doc ที่ completed
+  - audit_log ใช้ action เดิม `edit_header` (เลิกใช้ `reopen_completed`)
+- **คง 33 stories** (แก้ US-109 ไม่เพิ่ม)
+- อ้างอิง PRD v2.6
 
 ### 21 พฤษภาคม 2569 (v1.5) — Date/Timezone, Export, Reopen, Audit Trail
 
@@ -167,20 +179,23 @@
 
 ---
 
-### US-109
-> **As an** Admin / Admin SAP
-> **I want to** กดปุ่ม "แก้ไขเอกสาร" บนเอกสารที่ Status "เสร็จสมบูรณ์" แล้วเพื่อแก้ไขข้อมูลภายหลังจากนำเข้า SAP
-> **So that** ถ้าตรวจพบความผิดพลาดหลังปิดงาน (เช่น น้ำหนักผิด, MFG/EXP ผิด) สามารถแก้ไขได้โดยไม่ต้องสร้างเอกสารใหม่
+### US-109 (v1.6 — Direct Edit)
+> **As an** Admin / Admin SAP / Manager
+> **I want to** กดปุ่ม "แก้ไขข้อมูล" บนเอกสารที่ Status "เสร็จสมบูรณ์" แล้วเพื่อแก้ไขข้อมูล**โดยตรง** โดยไม่เปลี่ยน status และไม่ส่งกลับไปยัง Operator
+> **So that** ถ้าตรวจพบความผิดพลาดหลังปิดงาน (เช่น น้ำหนักผิด, MFG/EXP ผิด) Admin/Manager แก้เองได้ทันทีโดยเอกสารยังคงเป็น completed และไม่ไปรบกวน operator
 
 **Acceptance Criteria:**
-- [x] ปุ่ม "แก้ไขเอกสาร" ปรากฏใต้กล่อง "SAP Linked" บน `/admin/[id]` เมื่อ Status = `completed`
-- [x] เห็นเฉพาะ role `admin` และ `admin_sap` (อื่น ๆ เช่น qc/manager ไม่เห็น)
-- [x] กดแล้วเปิด form กรอก **เหตุผล** (required, ห้ามว่าง)
-- [x] หลังยืนยัน Status เปลี่ยนเป็น 🟡 "กำลังดำเนินการ" (in_progress)
-- [x] **เก็บไว้ไม่เคลียร์:** `sap_inbound_id` (CFSD), `sap_notification_id`, `sap_attachment_url`
-- [x] **เคลียร์เป็น null:** `closed_at`, `closed_by`, `submitted_at`, `ended_at`
-- [x] บันทึก `audit_log` action=`reopen_completed` พร้อม `detail.reason`
-- [x] หลัง edit + ส่งงานใหม่ + admin_sap เปิด SapEntryForm — CFSD ถูก pre-fill (ไม่ต้องกรอกใหม่)
+- [x] ปุ่ม "แก้ไขข้อมูล (status ไม่เปลี่ยน)" ปรากฏใต้กล่อง "SAP Linked" บน `/admin/[id]` เมื่อ Status = `completed`
+- [x] เห็นเฉพาะ role `admin`, `admin_sap`, `manager` (operator/qc ไม่เห็น) — ตรวจด้วย `canEditDocumentData(role, "completed")`
+- [x] กดแล้ว **Link ไป `/doc/[id]/header` ทันที** (ไม่มี confirm dialog, ไม่กรอกเหตุผล)
+- [x] ทุกฟิลด์ในหน้า `/doc/[id]/*` (header, per-pcs, per-inner, count, remainder, issues) **editable** สำหรับ role ที่มีสิทธิ์
+- [x] **Status ไม่เปลี่ยน** — เอกสารยังคงเป็น `completed` หลังแก้
+- [x] **ไม่เคลียร์ timestamps:** `closed_at` / `closed_by` / `submitted_at` / `sap_inbound_id` คงอยู่ตามเดิม
+- [x] **เอกสารไม่กลับไปแสดงในงานของ operator** (เพราะ status ยัง completed)
+- [x] Banner สีส้มแสดงบนหน้า `/doc/[id]/*` ขณะแก้ doc ที่ completed: "⚠ เอกสารนี้นำเข้า SAP แล้ว — การแก้ไขจะไม่เปลี่ยนสถานะกลับ แต่ระบบจะบันทึก audit log ทุกครั้ง"
+- [x] audit_log บันทึก action `edit_header` (ตามปกติ) — ใช้ตัว detail/timestamps แยกแยะว่าเป็นการแก้หลัง SAP
+
+**Note:** v1.5 มี action `reopen_completed` แต่ deprecate แล้ว — เปลี่ยนเป็น direct edit แบบนี้แทน
 
 ---
 
