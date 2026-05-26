@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { CountGrid } from "./CountGrid";
 import { SectionHeader } from "@/components/Field";
 import { SkipSection } from "@/components/SkipSection";
+import { canEditDocumentData } from "@/lib/workflow";
 
 export default async function CountPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
+  const { profile } = await getCurrentUserAndProfile();
   const { data: doc } = await supabase
     .from("gr_documents")
     .select("*")
@@ -17,7 +19,7 @@ export default async function CountPage({ params }: { params: { id: string } }) 
     .select("*")
     .eq("document_id", params.id);
 
-  const readOnly = doc.status !== "in_progress";
+  const readOnly = !profile || !canEditDocumentData(profile.role, doc.status);
   const skipped = !!doc.skip_per_carton;
 
   return (
@@ -42,7 +44,12 @@ export default async function CountPage({ params }: { params: { id: string } }) 
           เมื่อข้ามการชั่งต่อลัง ระบบจะข้ามการนับเศษให้อัตโนมัติในขั้นส่งงาน
         </p>
       ) : (
-        <CountGrid documentId={params.id} doc={doc} initial={(entries || []) as any} />
+        <CountGrid
+          documentId={params.id}
+          doc={doc}
+          initial={(entries || []) as any}
+          readOnly={readOnly}
+        />
       )}
     </div>
   );

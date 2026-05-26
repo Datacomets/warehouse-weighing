@@ -3,6 +3,7 @@ import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { TopAppBar } from "@/components/TopAppBar";
 import { StepNav } from "./StepNav";
 import { StatusBadge } from "@/components/StatusBadge";
+import { canEditDocumentData } from "@/lib/workflow";
 
 export default async function DocLayout({
   params,
@@ -46,7 +47,9 @@ export default async function DocLayout({
     submit: doc.status === "pending_sap" || doc.status === "completed",
   };
 
-  const readOnly = doc.status !== "in_progress";
+  const readOnly = !canEditDocumentData(profile.role, doc.status);
+  const isAdminEditingCompleted =
+    doc.status === "completed" && canEditDocumentData(profile.role, doc.status);
 
   return (
     <>
@@ -61,6 +64,11 @@ export default async function DocLayout({
         {readOnly && (
           <div className="bg-secondary-container/60 border border-outline-variant/30 text-on-secondary-container text-xs px-3 py-2 rounded-lg mb-3">
             เอกสารนี้ถูกล็อก (Status: {doc.status}). ขอให้ Admin "ปลดล็อก" หากต้องการแก้ไข
+          </div>
+        )}
+        {isAdminEditingCompleted && (
+          <div className="bg-tertiary-container/40 border border-tertiary-fixed-dim/40 text-on-tertiary-container text-xs px-3 py-2 rounded-lg mb-3">
+            ⚠ เอกสารนี้ <b>นำเข้า SAP แล้ว</b> — การแก้ไขจะไม่เปลี่ยนสถานะกลับ แต่ระบบจะบันทึก audit log ทุกครั้ง
           </div>
         )}
         {children}

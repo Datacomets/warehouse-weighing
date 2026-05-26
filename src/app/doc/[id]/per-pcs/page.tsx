@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { WeightEntry } from "@/components/WeightEntry";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { SectionHeader } from "@/components/Field";
 import { SkipSection } from "@/components/SkipSection";
 import { StepButtons } from "@/components/StepButtons";
+import { canEditDocumentData } from "@/lib/workflow";
 
 export default async function PerPcsPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
+  const { profile } = await getCurrentUserAndProfile();
   const { data: doc } = await supabase
     .from("gr_documents")
     .select("id,status,weight_unit,skip_per_pcs,skip_reason_per_pcs")
@@ -26,7 +28,7 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
     .eq("document_id", params.id)
     .eq("kind", "per_pcs");
 
-  const readOnly = doc?.status !== "in_progress";
+  const readOnly = !profile || !canEditDocumentData(profile.role, doc.status);
   const skipped = !!doc.skip_per_pcs;
 
   return (

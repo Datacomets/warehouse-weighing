@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   submitDocument,
   unlockDocument,
-  reopenCompletedDocument,
   recallSubmission,
   completeSapEntry,
 } from "./docActions";
@@ -127,87 +126,6 @@ describe("unlockDocument()", () => {
     });
 
     expect(result).toEqual({ ok: false, error: "constraint violation" });
-    expect(sb.insert).not.toHaveBeenCalled();
-  });
-});
-
-describe("reopenCompletedDocument()", () => {
-  let sb: ReturnType<typeof makeSupabaseMock>;
-  beforeEach(() => {
-    sb = makeSupabaseMock();
-  });
-
-  it("rejects empty reason without touching the DB", async () => {
-    const result = await reopenCompletedDocument(sb.client, {
-      docId: "doc-1",
-      userId: "admin-1",
-      reason: "",
-    });
-
-    expect(result).toEqual({ ok: false, error: "กรุณากรอกเหตุผล" });
-    expect(sb.from).not.toHaveBeenCalled();
-  });
-
-  it("rejects whitespace-only reason", async () => {
-    const result = await reopenCompletedDocument(sb.client, {
-      docId: "doc-1",
-      userId: "admin-1",
-      reason: "   ",
-    });
-    expect(result.ok).toBe(false);
-    expect(sb.from).not.toHaveBeenCalled();
-  });
-
-  it("clears close + submit timestamps but preserves CFSD info (not in payload)", async () => {
-    const result = await reopenCompletedDocument(sb.client, {
-      docId: "doc-1",
-      userId: "admin-1",
-      reason: "พบน้ำหนักผิดหลังปิดงาน",
-    });
-
-    expect(result).toEqual({ ok: true });
-    expect(sb.update).toHaveBeenCalledWith({
-      status: "in_progress",
-      unlock_reason: "พบน้ำหนักผิดหลังปิดงาน",
-      submitted_at: null,
-      ended_at: null,
-      closed_at: null,
-      closed_by: null,
-    });
-    // sap_inbound_id / sap_notification_id / sap_attachment_url are NOT in
-    // the update payload — they stay as-is on the row.
-    const payload = (sb.update.mock.calls[0] as any[])[0] as Record<string, unknown>;
-    expect(payload).not.toHaveProperty("sap_inbound_id");
-    expect(payload).not.toHaveProperty("sap_notification_id");
-    expect(payload).not.toHaveProperty("sap_attachment_url");
-    expect(sb.updateEq).toHaveBeenCalledWith("id", "doc-1");
-  });
-
-  it("writes audit_log with action=reopen_completed and reason in detail", async () => {
-    await reopenCompletedDocument(sb.client, {
-      docId: "doc-1",
-      userId: "admin-1",
-      reason: "พบน้ำหนักผิดหลังปิดงาน",
-    });
-
-    expect(sb.insert).toHaveBeenCalledWith({
-      document_id: "doc-1",
-      actor: "admin-1",
-      action: "reopen_completed",
-      detail: { reason: "พบน้ำหนักผิดหลังปิดงาน" },
-    });
-  });
-
-  it("does not write audit log when update fails", async () => {
-    sb.updateEq.mockResolvedValue({ error: { message: "row-level security" } });
-
-    const result = await reopenCompletedDocument(sb.client, {
-      docId: "doc-1",
-      userId: "admin-1",
-      reason: "test",
-    });
-
-    expect(result).toEqual({ ok: false, error: "ไม่มีสิทธิ์ดำเนินการนี้" });
     expect(sb.insert).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,16 @@
 import { describe, it, expect } from "vitest";
-import type { DocStatus } from "./types";
-import { canEdit, canSubmit, canEnterSap, canUnlock, canReopen, nextStatus } from "./workflow";
+import type { DocStatus, UserRole } from "./types";
+import {
+  canEdit,
+  canSubmit,
+  canEnterSap,
+  canUnlock,
+  canEditDocumentData,
+  nextStatus,
+} from "./workflow";
 
 const ALL_STATUSES: DocStatus[] = ["in_progress", "pending_sap", "completed"];
+const ALL_ROLES: UserRole[] = ["operator", "qc", "manager", "admin_sap", "admin"];
 
 describe("canEdit() / canSubmit()", () => {
   it("allow in_progress only", () => {
@@ -26,12 +34,37 @@ describe("canEnterSap() / canUnlock()", () => {
   });
 });
 
-describe("canReopen()", () => {
-  it("allows completed only", () => {
-    expect(canReopen("completed")).toBe(true);
-  });
-  it.each(["in_progress", "pending_sap"] as const)("blocks %s", (s) => {
-    expect(canReopen(s)).toBe(false);
+describe("canEditDocumentData()", () => {
+  it.each(["admin", "admin_sap", "manager"] as const)(
+    "%s can edit when status is in_progress OR completed (late corrections)",
+    (role) => {
+      expect(canEditDocumentData(role, "in_progress")).toBe(true);
+      expect(canEditDocumentData(role, "completed")).toBe(true);
+    }
+  );
+
+  it.each(["admin", "admin_sap", "manager"] as const)(
+    "%s cannot edit pending_sap directly (must use Unlock flow)",
+    (role) => {
+      expect(canEditDocumentData(role, "pending_sap")).toBe(false);
+    }
+  );
+
+  it.each(["operator", "qc"] as const)(
+    "%s can only edit when status is in_progress",
+    (role) => {
+      expect(canEditDocumentData(role, "in_progress")).toBe(true);
+      expect(canEditDocumentData(role, "pending_sap")).toBe(false);
+      expect(canEditDocumentData(role, "completed")).toBe(false);
+    }
+  );
+
+  it("returns a boolean for every (role, status) pair", () => {
+    for (const r of ALL_ROLES) {
+      for (const s of ALL_STATUSES) {
+        expect(typeof canEditDocumentData(r, s)).toBe("boolean");
+      }
+    }
   });
 });
 
@@ -75,7 +108,6 @@ describe("workflow invariants", () => {
       expect(typeof canSubmit(s)).toBe("boolean");
       expect(typeof canEnterSap(s)).toBe("boolean");
       expect(typeof canUnlock(s)).toBe("boolean");
-      expect(typeof canReopen(s)).toBe("boolean");
     }
   });
 

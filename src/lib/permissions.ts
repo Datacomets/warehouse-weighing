@@ -35,14 +35,6 @@ export function canExportReport(role: UserRole): boolean {
   return EXPORT_REPORT_ROLES.includes(role);
 }
 
-/**
- * Who may reopen a `completed` document back to `in_progress` for late
- * corrections. Restricted to the two roles that own the SAP entry step.
- */
-export function canReopenCompleted(role: UserRole): boolean {
-  return role === "admin" || role === "admin_sap";
-}
-
 /** Only operators are scoped to their own documents on /home. */
 export function seesOnlyOwnDocuments(role: UserRole): boolean {
   return role === "operator";

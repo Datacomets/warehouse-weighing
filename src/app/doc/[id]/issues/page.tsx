@@ -1,6 +1,7 @@
 import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { IssuesPanel } from "./IssuesPanel";
 import { SectionHeader } from "@/components/Field";
+import { canEditDocumentData } from "@/lib/workflow";
 
 export default async function IssuesPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -16,13 +17,18 @@ export default async function IssuesPage({ params }: { params: { id: string } })
     .eq("document_id", params.id)
     .order("created_at", { ascending: false });
 
+  const readOnly =
+    !profile || !doc
+      ? true
+      : !canEditDocumentData(profile.role, doc.status);
+
   return (
     <div className="flex flex-col gap-5">
       <SectionHeader icon="report" title="บันทึกปัญหา" accent />
       <IssuesPanel
         documentId={params.id}
         userId={profile?.id || ""}
-        readOnly={doc?.status !== "in_progress"}
+        readOnly={readOnly}
         initial={(issues || []) as any}
       />
     </div>

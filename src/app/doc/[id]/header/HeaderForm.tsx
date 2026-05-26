@@ -12,10 +12,20 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 const REMARKS_MAX = 500;
 
-export function HeaderForm({ doc, userId }: { doc: any; userId?: string }) {
+export function HeaderForm({
+  doc,
+  userId,
+  readOnly: readOnlyProp,
+}: {
+  doc: any;
+  userId?: string;
+  /** Computed by the page from canEditDocumentData(role, status). Falls
+   *  back to the legacy status-only check for older callers. */
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const supabase = createClient();
-  const readOnly = doc.status !== "in_progress";
+  const readOnly = readOnlyProp ?? doc.status !== "in_progress";
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");

@@ -14,13 +14,17 @@ export function CountGrid({
   documentId,
   doc,
   initial,
+  readOnly: readOnlyProp,
 }: {
   documentId: string;
   doc: any;
   initial: { row_index: number; col_index: number; value: number }[];
+  /** Computed by the page from canEditDocumentData(role, status). Falls
+   *  back to the legacy status-only check for older callers. */
+  readOnly?: boolean;
 }) {
   const supabase = createClient();
-  const readOnly = doc.status !== "in_progress";
+  const readOnly = readOnlyProp ?? doc.status !== "in_progress";
 
   const initRows = Math.max(
     1,

@@ -1,5 +1,6 @@
 import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { HeaderForm } from "./HeaderForm";
+import { canEditDocumentData } from "@/lib/workflow";
 
 export default async function HeaderPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -10,5 +11,10 @@ export default async function HeaderPage({ params }: { params: { id: string } })
     .eq("id", params.id)
     .single();
 
-  return <HeaderForm doc={doc} userId={profile?.id} />;
+  const readOnly =
+    !profile || !doc
+      ? true
+      : !canEditDocumentData(profile.role, doc.status);
+
+  return <HeaderForm doc={doc} userId={profile?.id} readOnly={readOnly} />;
 }

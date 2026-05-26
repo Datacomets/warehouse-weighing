@@ -12,13 +12,17 @@ import { Toast, useToast } from "@/components/Toast";
 export function RemainderForm({
   doc,
   fullCartons,
+  readOnly: readOnlyProp,
 }: {
   doc: any;
   fullCartons: number;
+  /** Computed by the page from canEditDocumentData(role, status). Falls
+   *  back to the legacy status-only check for older callers. */
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
-  const readOnly = doc.status !== "in_progress";
+  const readOnly = readOnlyProp ?? doc.status !== "in_progress";
   const [remainderPcs, setRemainderPcs] = useState<string>(
     doc.remainder_pcs != null ? String(doc.remainder_pcs) : ""
   );

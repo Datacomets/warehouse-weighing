@@ -1,4 +1,4 @@
-import type { DocStatus } from "./types";
+import type { DocStatus, UserRole } from "./types";
 
 /**
  * Status workflow for GR documents.
@@ -31,13 +31,21 @@ export function canUnlock(status: DocStatus): boolean {
 }
 
 /**
- * Can admin reopen a `completed` doc back to `in_progress` for late
- * corrections (e.g. weight typo discovered after SAP entry)? Distinct
- * from canUnlock so the two flows can have different audit actions and
- * different UI affordances.
+ * Can the given role edit weight / grid / header / issue data on a doc
+ * given its current status?
+ *
+ * - admin / admin_sap / manager: in_progress (normal) OR completed (late
+ *   corrections in place — no status change, doc stays closed). For
+ *   pending_sap they must still use Unlock first to bounce it back to
+ *   the operator.
+ * - operator / qc: only while status is in_progress (existing rule —
+ *   submit locks them out until admin unlocks)
  */
-export function canReopen(status: DocStatus): boolean {
-  return status === "completed";
+export function canEditDocumentData(role: UserRole, status: DocStatus): boolean {
+  if (role === "admin" || role === "admin_sap" || role === "manager") {
+    return status === "in_progress" || status === "completed";
+  }
+  return status === "in_progress";
 }
 
 /**

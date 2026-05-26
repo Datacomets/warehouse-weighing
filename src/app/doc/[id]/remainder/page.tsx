@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { RemainderForm } from "./RemainderForm";
 import { SectionHeader } from "@/components/Field";
+import { canEditDocumentData } from "@/lib/workflow";
 
 export default async function RemainderPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
+  const { profile } = await getCurrentUserAndProfile();
   const { data: doc } = await supabase
     .from("gr_documents")
     .select("*")
@@ -17,12 +19,15 @@ export default async function RemainderPage({ params }: { params: { id: string }
     .select("*", { count: "exact", head: true })
     .eq("document_id", params.id);
 
+  const readOnly = !profile || !canEditDocumentData(profile.role, doc.status);
+
   return (
     <div className="flex flex-col gap-5">
       <SectionHeader icon="exposure" title="นับเศษ (Remainder)" accent />
       <RemainderForm
         doc={doc}
         fullCartons={fullCartons || 0}
+        readOnly={readOnly}
       />
     </div>
   );

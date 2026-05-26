@@ -7,9 +7,9 @@ import { Icon } from "@/components/Icon";
 import { fmt, fmtDate, fmtDateTime, leadTimeText, stats } from "@/lib/stats";
 import { SapEntryForm } from "./SapEntryForm";
 import { UnlockButton } from "./UnlockButton";
-import { ReopenButton } from "./ReopenButton";
 import { ISSUE_TYPES } from "@/lib/mock-erp";
-import { canAccessAdminQueue, canReopenCompleted } from "@/lib/permissions";
+import { canAccessAdminQueue } from "@/lib/permissions";
+import { canEditDocumentData } from "@/lib/workflow";
 import { clsx } from "clsx";
 
 /** Human-readable Thai labels for audit_log action codes. */
@@ -277,10 +277,13 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
                 <b>ปิดงานเมื่อ:</b> {fmtDateTime(doc.closed_at)}
               </p>
             </div>
-            {canReopenCompleted(profile.role) && (
-              <div className="flex gap-2">
-                <ReopenButton docId={doc.id} />
-              </div>
+            {canEditDocumentData(profile.role, doc.status) && (
+              <Link
+                href={`/doc/${doc.id}/header`}
+                className="btn-secondary text-tertiary-fixed-dim"
+              >
+                <Icon name="edit" /> แก้ไขข้อมูล (status ไม่เปลี่ยน)
+              </Link>
             )}
           </>
         )}
