@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import { Toast, useToast } from "@/components/Toast";
 import { validateHeader } from "@/lib/validation";
 import { translateSupabaseError } from "@/lib/supabaseError";
 import { clsx } from "clsx";
@@ -26,6 +27,7 @@ export function HeaderForm({
   const router = useRouter();
   const supabase = createClient();
   const readOnly = readOnlyProp ?? doc.status !== "in_progress";
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -124,11 +126,13 @@ export function HeaderForm({
     if (error) {
       setSaveStatus("error");
       setErr(translateSupabaseError(error));
+      toast.error("บันทึกไม่สำเร็จ — " + translateSupabaseError(error));
       return;
     }
     initialRef.current = f;
     setDirty(false);
     setSaveStatus("saved");
+    toast.show("บันทึกแล้ว ✓");
     if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
     statusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
   }
@@ -187,14 +191,23 @@ export function HeaderForm({
     else router.refresh();
   }
 
+  const isPostSubmit = doc.status !== "in_progress";
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        save(`/doc/${doc.id}/per-pcs`);
+        if (isPostSubmit) {
+          // Admin/manager editing pending_sap or completed doc → just save
+          // and return to /admin/[id] (don't navigate to per-pcs step)
+          save(`/admin/${doc.id}`);
+        } else {
+          save(`/doc/${doc.id}/per-pcs`);
+        }
       }}
       className="flex flex-col gap-5 pb-32"
     >
+      <Toast message={toast.msg} variant={toast.variant} />
       <SectionHeader icon="description" title="ข้อมูลพื้นฐาน" accent />
       <div className="grid grid-cols-2 gap-3">
         <Field label="LOT" required>
@@ -455,8 +468,12 @@ export function HeaderForm({
             <SaveIndicator status={saveStatus} />
           </div>
           <button type="submit" disabled={saving} className="btn-primary w-full">
-            {saving ? "กำลังบันทึก..." : "ถัดไป: ชั่ง Per Pcs"}
-            <Icon name="arrow_forward" />
+            {saving
+              ? "กำลังบันทึก..."
+              : isPostSubmit
+              ? "บันทึกและกลับหน้า Admin"
+              : "ถัดไป: ชั่ง Per Pcs"}
+            <Icon name={isPostSubmit ? "check_circle" : "arrow_forward"} />
           </button>
         </div>
       )}
