@@ -93,6 +93,15 @@ export function HeaderForm({
     setDirty(true);
   }
 
+  // Field keys that differ between the last-saved snapshot and the current
+  // form, so the audit_log can record *what* changed (not just "edit_header").
+  // Keys are stored raw; the admin timeline translates them to Thai labels.
+  function changedFieldKeys(prev: typeof f, next: typeof f): string[] {
+    return (Object.keys(next) as (keyof typeof f)[])
+      .filter((k) => String(prev[k] ?? "") !== String(next[k] ?? ""))
+      .map((k) => String(k));
+  }
+
   function buildPayload(state: typeof f) {
     return {
       lot: state.lot,
@@ -133,10 +142,12 @@ export function HeaderForm({
     // produces an audit row. The explicit save() handler already logs for
     // in_progress edits, so we only fire here when the doc has moved past.
     if (userId && doc.status !== "in_progress") {
+      const changedFields = changedFieldKeys(initialRef.current, f);
       await supabase.from("audit_log").insert({
         document_id: doc.id,
         actor: userId,
         action: "edit_header",
+        detail: changedFields.length ? { fields: changedFields } : null,
       });
     }
     initialRef.current = f;
@@ -179,6 +190,7 @@ export function HeaderForm({
       return;
     }
 
+    const changedFields = changedFieldKeys(initialRef.current, f);
     const { error } = await supabase
       .from("gr_documents")
       .update(buildPayload(f))
@@ -193,6 +205,7 @@ export function HeaderForm({
         document_id: doc.id,
         actor: userId,
         action: "edit_header",
+        detail: changedFields.length ? { fields: changedFields } : null,
       });
     }
     initialRef.current = f;

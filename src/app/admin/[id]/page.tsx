@@ -25,6 +25,28 @@ const ACTION_LABEL: Record<string, string> = {
   recall_submission: "ถอนส่งงาน",
 };
 
+/** Thai labels for header field keys recorded in audit_log detail.fields. */
+const HEADER_FIELD_LABEL: Record<string, string> = {
+  lot: "LOT",
+  po_number: "PO Number",
+  item_code: "Item Code",
+  description: "Description",
+  supplier: "ชื่อ Supplier",
+  delivery_date: "Delivery Date",
+  scale_name: "เครื่องชั่ง",
+  qty_per_carton: "จำนวนชิ้น/ลัง",
+  width_cm: "กว้าง",
+  length_cm: "ยาว",
+  height_cm: "สูง",
+  gross_weight: "Gross Weight",
+  net_weight: "Net Weight",
+  mfg_date: "MFG Date",
+  exp_date: "EXP Date",
+  lot_number: "Lot Number",
+  qc_status: "สถานะ QC",
+  remarks: "หมายเหตุ",
+};
+
 export default async function AdminDocPage({ params }: { params: { id: string } }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
@@ -264,6 +286,11 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
                   {entry.detail?.value !== undefined && (
                     <span className="text-on-surface-variant">
                       → <b>{String(entry.detail.value)}</b>
+                    </span>
+                  )}
+                  {Array.isArray(entry.detail?.fields) && entry.detail.fields.length > 0 && (
+                    <span className="text-on-surface-variant">
+                      → <b>{entry.detail.fields.map((k: string) => HEADER_FIELD_LABEL[k] ?? k).join(", ")}</b>
                     </span>
                   )}
                   {entry.detail?.sap_inbound_id && (
