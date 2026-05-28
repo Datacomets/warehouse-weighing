@@ -30,6 +30,7 @@ export default async function IssuesPage({ params }: { params: { id: string } })
         userId={profile?.id || ""}
         readOnly={readOnly}
         initial={(issues || []) as any}
+        docStatus={doc?.status ?? "in_progress"}
       />
     </div>
   );

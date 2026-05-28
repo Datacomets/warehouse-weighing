@@ -16,11 +16,13 @@ export function IssuesPanel({
   userId,
   readOnly,
   initial,
+  docStatus,
 }: {
   documentId: string;
   userId: string;
   readOnly: boolean;
   initial: any[];
+  docStatus?: string;
 }) {
   const supabase = createClient();
   const { confirm, DialogElement } = useConfirm();
@@ -242,6 +244,15 @@ export function IssuesPanel({
           <Link href={`/doc/${documentId}/submit`} className="btn-primary flex-1">
             ส่งงาน <Icon name="arrow_forward" />
           </Link>
+          {docStatus && docStatus !== "in_progress" && (
+            <Link
+              href={`/admin/${documentId}`}
+              className="btn-secondary flex-none px-4 text-tertiary-fixed-dim"
+              title="บันทึกอัตโนมัติแล้ว — กลับหน้า Admin"
+            >
+              <Icon name="check_circle" /> กลับ Admin
+            </Link>
+          )}
         </div>
       </div>
     </div>

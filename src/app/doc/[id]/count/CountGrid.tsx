@@ -133,6 +133,15 @@ export function CountGrid({
           <Link href={`/doc/${documentId}/remainder`} className="btn-primary flex-1">
             นับเศษ <Icon name="arrow_forward" />
           </Link>
+          {doc.status !== "in_progress" && (
+            <Link
+              href={`/admin/${documentId}`}
+              className="btn-secondary flex-none px-4 text-tertiary-fixed-dim"
+              title="บันทึกอัตโนมัติแล้ว — กลับหน้า Admin"
+            >
+              <Icon name="check_circle" /> กลับ Admin
+            </Link>
+          )}
         </div>
       </div>
     </div>
