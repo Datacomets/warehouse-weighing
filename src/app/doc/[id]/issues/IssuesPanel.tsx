@@ -246,7 +246,7 @@ export function IssuesPanel({
           </Link>
           {docStatus && docStatus !== "in_progress" && (
             <Link
-              href={`/admin/${documentId}`}
+              href="/admin"
               className="btn-secondary flex-none px-4 text-tertiary-fixed-dim"
               title="บันทึกอัตโนมัติแล้ว — กลับหน้า Admin"
             >

@@ -14,7 +14,8 @@ export function StepButtons({
   nextLabel?: string;
   /** When provided (admin/manager editing a non-in_progress doc), renders
    *  a third "กลับ Admin" link beside the next button so the editor can
-   *  return to /admin/[id] without walking through the rest of the steps. */
+   *  jump back to the admin queue without walking through the rest of the
+   *  steps. Callers pass "/admin" — the main queue, not the doc detail. */
   backToAdmin?: string;
 }) {
   return (

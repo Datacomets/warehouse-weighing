@@ -62,7 +62,7 @@ export default async function PerPcsPage({ params }: { params: { id: string } })
           prevLabel="Header"
           next={`/doc/${params.id}/per-inner`}
           nextLabel="ชั่งต่อชิ้น (Inner)"
-          backToAdmin={doc.status !== "in_progress" ? `/admin/${params.id}` : undefined}
+          backToAdmin={doc.status !== "in_progress" ? "/admin" : undefined}
         />
       )}
     </div>

@@ -209,8 +209,9 @@ export function HeaderForm({
         e.preventDefault();
         if (isPostSubmit) {
           // Admin/manager editing pending_sap or completed doc → just save
-          // and return to /admin/[id] (don't navigate to per-pcs step)
-          save(`/admin/${doc.id}`);
+          // and return to the main admin queue (not the per-pcs step, and
+          // not the doc detail — they want to move on to the next document)
+          save("/admin");
         } else {
           save(`/doc/${doc.id}/per-pcs`);
         }

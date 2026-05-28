@@ -63,7 +63,7 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
           prevLabel="ชั่งต่อชิ้น"
           next={`/doc/${params.id}/count`}
           nextLabel="ชั่งต่อลัง"
-          backToAdmin={doc.status !== "in_progress" ? `/admin/${params.id}` : undefined}
+          backToAdmin={doc.status !== "in_progress" ? "/admin" : undefined}
         />
       )}
     </div>

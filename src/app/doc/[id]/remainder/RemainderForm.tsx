@@ -259,7 +259,7 @@ export function RemainderForm({
         prevLabel="ชั่งต่อลัง"
         next={`/doc/${doc.id}/issues`}
         nextLabel="รายงานปัญหา"
-        backToAdmin={doc.status !== "in_progress" ? `/admin/${doc.id}` : undefined}
+        backToAdmin={doc.status !== "in_progress" ? "/admin" : undefined}
       />
     </>
   );
