@@ -108,28 +108,6 @@ export function RemainderForm({
         <div><b>จำนวนลังเต็ม (จาก Per Carton):</b> {fullCartons}</div>
       </div>
 
-      {/* การจัดวางบนพาเลท */}
-      <div className="card border-l-4 border-secondary-container">
-        <Field label="จำนวนลังที่วาง / 1 พาเลท" hint="กรอกเพื่อใช้อ้างอิงในรายงาน (ไม่บังคับ)">
-          <input
-            disabled={readOnly}
-            type="number"
-            inputMode="numeric"
-            min="0"
-            step="1"
-            value={cartonsPerPallet}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v !== "" && (Number(v) < 0 || !Number.isInteger(Number(v)))) return;
-              setCartonsPerPallet(v);
-            }}
-            onBlur={persistCartonsPerPallet}
-            className="input-base"
-            placeholder="เช่น 24"
-          />
-        </Field>
-      </div>
-
       {/* กรอกเศษ */}
       <div className="card border-l-4 border-tertiary-fixed-dim">
         <Field label="จำนวนเศษ (ชิ้น)" hint="นับจำนวนชิ้นที่ไม่ครบลัง ถ้าไม่มีเศษให้กดปุ่ม 'ไม่มีเศษ'">
@@ -193,6 +171,28 @@ export function RemainderForm({
         {err && (
           <p className="text-xs text-error mt-2">{err}</p>
         )}
+      </div>
+
+      {/* การจัดวางบนพาเลท */}
+      <div className="card border-l-4 border-secondary-container">
+        <Field label="จำนวนลังที่วาง / 1 พาเลท" hint="กรอกเพื่อใช้อ้างอิงในรายงาน (ไม่บังคับ)">
+          <input
+            disabled={readOnly}
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="1"
+            value={cartonsPerPallet}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v !== "" && (Number(v) < 0 || !Number.isInteger(Number(v)))) return;
+              setCartonsPerPallet(v);
+            }}
+            onBlur={persistCartonsPerPallet}
+            className="input-base"
+            placeholder="เช่น 24"
+          />
+        </Field>
       </div>
 
       {/* สรุป */}
