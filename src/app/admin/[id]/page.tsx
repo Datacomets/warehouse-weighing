@@ -16,6 +16,8 @@ import { clsx } from "clsx";
 const ACTION_LABEL: Record<string, string> = {
   create_doc: "สร้างเอกสาร",
   edit_header: "แก้ไข Header",
+  edit_remainder: "แก้ไขจำนวนเศษ",
+  edit_cartons_per_pallet: "แก้ไขลังต่อพาเลท",
   submit_work: "ส่งงาน",
   complete_sap: "นำเข้า SAP",
   unlock: "ปลดล็อกเพื่อแก้ไข",
@@ -131,13 +133,15 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
             </p>
           )}
           {doc.cartons_per_pallet != null && (
-            <p className="text-[11px] text-center mt-2 pt-2 border-t border-outline-variant/30">
-              <b>จำนวนลังที่วาง / 1 พาเลท:</b>{" "}
-              <span className="font-headline font-bold text-secondary">
-                {doc.cartons_per_pallet}
-              </span>{" "}
-              ลัง
-            </p>
+            <div className="mt-3 pt-3 border-t border-outline-variant/30 flex items-center justify-between gap-3">
+              <span className="text-sm font-bold">จำนวนลังที่วาง / 1 พาเลท</span>
+              <div className="text-right">
+                <span className="text-2xl font-headline font-bold text-secondary">
+                  {doc.cartons_per_pallet}
+                </span>
+                <span className="text-xs text-outline ml-1">ลัง</span>
+              </div>
+            </div>
           )}
         </div>
 
@@ -255,6 +259,11 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
                   {entry.detail?.reason && (
                     <span className="text-outline italic">
                       &ldquo;{String(entry.detail.reason)}&rdquo;
+                    </span>
+                  )}
+                  {entry.detail?.value !== undefined && (
+                    <span className="text-on-surface-variant">
+                      → <b>{String(entry.detail.value)}</b>
                     </span>
                   )}
                   {entry.detail?.sap_inbound_id && (

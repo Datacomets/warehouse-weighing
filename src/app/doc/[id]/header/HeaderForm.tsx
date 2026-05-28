@@ -129,6 +129,16 @@ export function HeaderForm({
       toast.error("บันทึกไม่สำเร็จ — " + translateSupabaseError(error));
       return;
     }
+    // When admin/manager edits a post-submit doc field-by-field, each blur
+    // produces an audit row. The explicit save() handler already logs for
+    // in_progress edits, so we only fire here when the doc has moved past.
+    if (userId && doc.status !== "in_progress") {
+      await supabase.from("audit_log").insert({
+        document_id: doc.id,
+        actor: userId,
+        action: "edit_header",
+      });
+    }
     initialRef.current = f;
     setDirty(false);
     setSaveStatus("saved");

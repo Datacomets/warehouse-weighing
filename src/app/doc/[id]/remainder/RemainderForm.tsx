@@ -13,12 +13,16 @@ export function RemainderForm({
   doc,
   fullCartons,
   readOnly: readOnlyProp,
+  userId,
 }: {
   doc: any;
   fullCartons: number;
   /** Computed by the page from canEditDocumentData(role, status). Falls
    *  back to the legacy status-only check for older callers. */
   readOnly?: boolean;
+  /** Current user id — required to write audit_log when admin/manager
+   *  edits a post-submit doc. May be null if the session is missing. */
+  userId?: string | null;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -55,6 +59,17 @@ export function RemainderForm({
     if (error) {
       setErr(translateSupabaseError(error));
       return;
+    }
+    // Log when admin/manager edits the remainder of a doc that has already
+    // been submitted — operators editing in_progress are part of the normal
+    // flow and stay out of the audit trail to avoid noise.
+    if (userId && doc.status !== "in_progress") {
+      await supabase.from("audit_log").insert({
+        document_id: doc.id,
+        actor: userId,
+        action: "edit_remainder",
+        detail: { value: val },
+      });
     }
     toast.show(successMsg);
     router.refresh();
@@ -93,6 +108,16 @@ export function RemainderForm({
       return;
     }
     setSavedCartonsPerPallet(trimmed);
+    // See persistRemainder above — post-submit edits become audit entries
+    // so admin can see who changed the pallet count and when.
+    if (userId && doc.status !== "in_progress") {
+      await supabase.from("audit_log").insert({
+        document_id: doc.id,
+        actor: userId,
+        action: "edit_cartons_per_pallet",
+        detail: { value: val },
+      });
+    }
     toast.show("บันทึกแล้ว ✓");
   }
 

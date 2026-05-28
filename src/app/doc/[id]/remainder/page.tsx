@@ -28,6 +28,7 @@ export default async function RemainderPage({ params }: { params: { id: string }
         doc={doc}
         fullCartons={fullCartons || 0}
         readOnly={readOnly}
+        userId={profile?.id ?? null}
       />
     </div>
   );
