@@ -130,6 +130,15 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
               ({qtyPerCarton} × {fullCartons}) + {remainderPcs} = {totalPcs.toLocaleString()} ชิ้น
             </p>
           )}
+          {doc.cartons_per_pallet != null && (
+            <p className="text-[11px] text-center mt-2 pt-2 border-t border-outline-variant/30">
+              <b>จำนวนลังที่วาง / 1 พาเลท:</b>{" "}
+              <span className="font-headline font-bold text-secondary">
+                {doc.cartons_per_pallet}
+              </span>{" "}
+              ลัง
+            </p>
+          )}
         </div>
 
         {/* Per Pcs — ค่าทุกรายการ */}

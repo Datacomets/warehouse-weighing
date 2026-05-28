@@ -26,6 +26,12 @@ export function RemainderForm({
   const [remainderPcs, setRemainderPcs] = useState<string>(
     doc.remainder_pcs != null ? String(doc.remainder_pcs) : ""
   );
+  const [cartonsPerPallet, setCartonsPerPallet] = useState<string>(
+    doc.cartons_per_pallet != null ? String(doc.cartons_per_pallet) : ""
+  );
+  const [savedCartonsPerPallet, setSavedCartonsPerPallet] = useState<string>(
+    doc.cartons_per_pallet != null ? String(doc.cartons_per_pallet) : ""
+  );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const toast = useToast();
@@ -69,6 +75,27 @@ export function RemainderForm({
     await persistRemainder(0, "บันทึกว่าไม่มีเศษ");
   }
 
+  async function persistCartonsPerPallet() {
+    if (readOnly) return;
+    const trimmed = cartonsPerPallet.trim();
+    if (trimmed === savedCartonsPerPallet) return;
+    const val = trimmed === "" ? null : Number(trimmed);
+    if (val !== null && (!Number.isFinite(val) || val < 0 || !Number.isInteger(val))) {
+      setErr("จำนวนลังต่อพาเลทต้องเป็นจำนวนเต็มไม่ติดลบ");
+      return;
+    }
+    const { error } = await supabase
+      .from("gr_documents")
+      .update({ cartons_per_pallet: val })
+      .eq("id", doc.id);
+    if (error) {
+      setErr(translateSupabaseError(error));
+      return;
+    }
+    setSavedCartonsPerPallet(trimmed);
+    toast.show("บันทึกแล้ว ✓");
+  }
+
   // Shows the "no remainder" badge when saved value is 0 AND operator hasn't started editing
   const markedNoRemainder = doc.remainder_pcs === 0 && remainderPcs === "0";
 
@@ -79,6 +106,28 @@ export function RemainderForm({
       <div className="card text-xs grid grid-cols-2 gap-2">
         <div><b>ชิ้น/ลัง (Packing List):</b> {qtyPerCarton || "-"}</div>
         <div><b>จำนวนลังเต็ม (จาก Per Carton):</b> {fullCartons}</div>
+      </div>
+
+      {/* การจัดวางบนพาเลท */}
+      <div className="card border-l-4 border-secondary-container">
+        <Field label="จำนวนลังที่วาง / 1 พาเลท" hint="กรอกเพื่อใช้อ้างอิงในรายงาน (ไม่บังคับ)">
+          <input
+            disabled={readOnly}
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="1"
+            value={cartonsPerPallet}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v !== "" && (Number(v) < 0 || !Number.isInteger(Number(v)))) return;
+              setCartonsPerPallet(v);
+            }}
+            onBlur={persistCartonsPerPallet}
+            className="input-base"
+            placeholder="เช่น 24"
+          />
+        </Field>
       </div>
 
       {/* กรอกเศษ */}
