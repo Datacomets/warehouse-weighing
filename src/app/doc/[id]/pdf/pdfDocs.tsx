@@ -1,10 +1,28 @@
 "use client";
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Font, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
 import { countGridStats, reorganizeGridToRows, totalPiecesCount } from "@/lib/documentSummary";
 
+// Helvetica (the @react-pdf default) has no Thai glyphs, so Thai text in
+// the PDF rendered as garbled boxes. Register Sarabun from @fontsource via
+// jsDelivr — pinned version so the URL is stable across builds and the
+// CDN serves it with CORS headers so the renderer can fetch it client-side.
+Font.register({
+  family: "Sarabun",
+  fonts: [
+    {
+      src: "https://cdn.jsdelivr.net/npm/@fontsource/sarabun@5.2.5/files/sarabun-thai-400-normal.ttf",
+      fontWeight: 400,
+    },
+    {
+      src: "https://cdn.jsdelivr.net/npm/@fontsource/sarabun@5.2.5/files/sarabun-thai-700-normal.ttf",
+      fontWeight: 700,
+    },
+  ],
+});
+
 const styles = StyleSheet.create({
-  page: { padding: 28, fontSize: 10, fontFamily: "Helvetica", color: "#191c1d" },
+  page: { padding: 28, fontSize: 10, fontFamily: "Sarabun", color: "#191c1d" },
   h1: { fontSize: 16, fontWeight: 700, color: "#00003c", marginBottom: 2 },
   small: { fontSize: 8, color: "#767684" },
   row: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: "#c6c5d5", paddingBottom: 6, marginBottom: 8 },
