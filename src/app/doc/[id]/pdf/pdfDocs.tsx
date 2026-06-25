@@ -51,6 +51,7 @@ export function WeightSheetPdf({ doc, grid, perPcs, perInner, perCarton }: any) 
           <Cell label="Item Code" value={doc.item_code} />
           <Cell label="Supplier Item Name" value={doc.supplier} />
           <Cell label="Description" value={doc.description} full />
+          <Cell label="Lot Number" value={doc.lot_number} />
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
           <Cell label="Scale" value={doc.scale_name} />
           <Cell label="Qty / Carton" value={String(doc.qty_per_carton ?? "-")} />
@@ -121,6 +122,7 @@ export function CountSheetPdf({ doc, grid }: any) {
         <View style={styles.grid}>
           <Cell label="LOT" value={doc.lot} />
           <Cell label="Item" value={doc.item_code} />
+          <Cell label="Lot Number" value={doc.lot_number} />
           <Cell label="Description" value={doc.description} full />
         </View>
 
