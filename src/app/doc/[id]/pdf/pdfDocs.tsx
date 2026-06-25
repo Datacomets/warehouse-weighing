@@ -4,18 +4,19 @@ import { fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
 import { countGridStats, reorganizeGridToRows, totalPiecesCount } from "@/lib/documentSummary";
 
 // Helvetica (the @react-pdf default) has no Thai glyphs, so Thai text in
-// the PDF rendered as garbled boxes. Register Sarabun from @fontsource via
-// jsDelivr — pinned version so the URL is stable across builds and the
-// CDN serves it with CORS headers so the renderer can fetch it client-side.
+// the PDF rendered as garbled boxes. @react-pdf needs TTF/OTF — and modern
+// @fontsource only ships woff/woff2 — so we pull Sarabun TTF from
+// @expo-google-fonts/sarabun via jsDelivr. Pinned version + CORS headers
+// keep this stable across builds and let the renderer fetch client-side.
 Font.register({
   family: "Sarabun",
   fonts: [
     {
-      src: "https://cdn.jsdelivr.net/npm/@fontsource/sarabun@5.2.5/files/sarabun-thai-400-normal.ttf",
+      src: "https://cdn.jsdelivr.net/npm/@expo-google-fonts/sarabun@0.4.1/400Regular/Sarabun_400Regular.ttf",
       fontWeight: 400,
     },
     {
-      src: "https://cdn.jsdelivr.net/npm/@fontsource/sarabun@5.2.5/files/sarabun-thai-700-normal.ttf",
+      src: "https://cdn.jsdelivr.net/npm/@expo-google-fonts/sarabun@0.4.1/700Bold/Sarabun_700Bold.ttf",
       fontWeight: 700,
     },
   ],
