@@ -11,9 +11,17 @@ import {
 } from "@/lib/documentSummary";
 import { ISSUE_TYPES, DEFECT_CODES } from "@/lib/mock-erp";
 
-const issueTypeLabel = (v: string) => ISSUE_TYPES.find((t) => t.value === v)?.label || v;
+// react-pdf drops the final glyph of a text run for scripts that don't end on
+// a space (Thai), e.g. the ก in "ใบชั่งน้ำหนัก". Appending a trailing space
+// makes the (invisible) space the last glyph instead of a real character.
+const noClip = (s: unknown): string => {
+  const str = s == null ? "" : String(s);
+  return str === "" ? str : `${str} `;
+};
+
+const issueTypeLabel = (v: string) => noClip(ISSUE_TYPES.find((t) => t.value === v)?.label || v);
 const defectLabel = (c: string) =>
-  c ? DEFECT_CODES.find((d) => d.code === c)?.label || c : "-";
+  c ? noClip(DEFECT_CODES.find((d) => d.code === c)?.label || c) : "-";
 
 // Packed item descriptions/codes are comma-delimited with no spaces, so the
 // PDF text layout treats the whole string as one word and lets it run off the
@@ -127,9 +135,9 @@ function CategoryBlock({
       </View>
 
       {skipped ? (
-        <Text style={styles.statLine}>ข้าม{reason ? `: ${reason}` : ""}</Text>
+        <Text style={styles.statLine}>{noClip(`ข้าม${reason ? `: ${reason}` : ""}`)}</Text>
       ) : values.length === 0 ? (
-        <Text style={styles.statLine}>ยังไม่มีค่าที่ชั่ง</Text>
+        <Text style={styles.statLine}>ยังไม่มีค่าที่ชั่ง </Text>
       ) : (
         <>
           <Text style={styles.statLine}>
@@ -171,7 +179,7 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
         <View style={styles.row}>
           <View>
             <Text style={styles.h1}>COMETS GR — Weight Sheet</Text>
-            <Text style={styles.small}>ใบชั่งน้ำหนัก</Text>
+            <Text style={styles.small}>ใบชั่งน้ำหนัก / Weight Sheet</Text>
           </View>
           <View>
             <Text style={styles.h1}>{doc.wh_number}</Text>
@@ -184,7 +192,7 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           <Cell label="PO" value={doc.po_number} />
           <Cell label="Item Code" value={softBreak(doc.item_code)} />
           <Cell label="Supplier Item Name" value={softBreak(doc.supplier)} />
-          <Cell label="Description" value={softBreak(doc.description)} />
+          <Cell label="Description" value={noClip(softBreak(doc.description))} />
           <Cell label="Lot Number" value={doc.lot_number} />
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
           <Cell label="Scale" value={doc.scale_name} />
@@ -236,21 +244,21 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           ปัญหาที่พบ ({issueList.length})
         </Text>
         {issueList.length === 0 ? (
-          <Text style={styles.small}>ไม่มีปัญหา</Text>
+          <Text style={styles.small}>ไม่มีปัญหา </Text>
         ) : (
           <View style={[styles.table, { marginTop: 4 }]}>
             <View style={styles.tr}>
-              <Text style={[styles.th, { flex: 1.2 }]}>ประเภท</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>รหัสของเสีย</Text>
-              <Text style={[styles.th, { flex: 0.6 }]}>จำนวน</Text>
-              <Text style={[styles.th, { flex: 2 }]}>หมายเหตุ</Text>
+              <Text style={[styles.th, { flex: 1.2 }]}>ประเภท </Text>
+              <Text style={[styles.th, { flex: 1.5 }]}>รหัสของเสีย </Text>
+              <Text style={[styles.th, { flex: 0.6 }]}>จำนวน </Text>
+              <Text style={[styles.th, { flex: 2 }]}>หมายเหตุ </Text>
             </View>
             {issueList.map((it: any, i: number) => (
               <View style={styles.tr} key={i}>
                 <Text style={[styles.td, { flex: 1.2 }]}>{issueTypeLabel(it.issue_type)}</Text>
                 <Text style={[styles.td, { flex: 1.5 }]}>{defectLabel(it.defect_code)}</Text>
                 <Text style={[styles.td, { flex: 0.6 }]}>{it.quantity ?? "-"}</Text>
-                <Text style={[styles.td, { flex: 2 }]}>{it.notes || "-"}</Text>
+                <Text style={[styles.td, { flex: 2 }]}>{it.notes ? noClip(it.notes) : "-"}</Text>
               </View>
             ))}
           </View>
@@ -259,11 +267,11 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
         <View style={{ marginTop: 12 }}>
           <Text style={styles.small2}>เริ่ม: {fmtDateTime(doc.started_at)}</Text>
           <Text style={styles.small2}>สิ้นสุด: {fmtDateTime(doc.ended_at)}</Text>
-          <Text style={styles.small2}>Lead Time: {leadTimeText(doc.started_at, doc.ended_at)}</Text>
+          <Text style={styles.small2}>Lead Time: {noClip(leadTimeText(doc.started_at, doc.ended_at))}</Text>
           <Text style={styles.small2}>
-            Cartons ชั่งแล้ว: ({doc.qty_per_carton ?? 0} x {cartonCount} ลัง) + เศษ {remainderPcs} = {totalPcs.toLocaleString()} ชิ้น
+            Cartons ชั่งแล้ว: ({doc.qty_per_carton ?? 0} x {cartonCount} ลัง) + เศษ {remainderPcs} = {totalPcs.toLocaleString()} ชิ้น{" "}
           </Text>
-          <Text style={styles.small2}>หมายเหตุ: {doc.remarks || "-"}</Text>
+          <Text style={styles.small2}>หมายเหตุ: {doc.remarks ? noClip(doc.remarks) : "-"}</Text>
         </View>
 
         <View style={styles.sigBox}>
@@ -291,7 +299,7 @@ export function CountSheetPdf({ doc, grid }: any) {
         <View style={styles.row}>
           <View>
             <Text style={styles.h1}>COMETS GR — Count Sheet</Text>
-            <Text style={styles.small}>ใบตรวจนับสินค้า</Text>
+            <Text style={styles.small}>ใบตรวจนับสินค้า / Count Sheet</Text>
           </View>
           <View>
             <Text style={styles.h1}>{doc.wh_number}</Text>
@@ -302,7 +310,7 @@ export function CountSheetPdf({ doc, grid }: any) {
           <Cell label="LOT" value={doc.lot} />
           <Cell label="Item" value={softBreak(doc.item_code)} />
           <Cell label="Lot Number" value={doc.lot_number} />
-          <Cell label="Description" value={softBreak(doc.description)} full />
+          <Cell label="Description" value={noClip(softBreak(doc.description))} full />
         </View>
 
         <View style={{ marginTop: 12 }}>
