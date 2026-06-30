@@ -6,21 +6,25 @@ import { Icon } from "@/components/Icon";
 export default function PdfDownloadButtons({
   doc,
   grid,
+  items = [],
   perPcs,
   perInner,
   perCarton,
+  issues = [],
 }: {
   doc: any;
   grid: any[];
+  items?: any[];
   perPcs: any;
   perInner: any;
   perCarton: any;
+  issues?: any[];
 }) {
   return (
     <>
       <PDFDownloadLink
         document={
-          <WeightSheetPdf doc={doc} grid={grid} perPcs={perPcs} perInner={perInner} perCarton={perCarton} />
+          <WeightSheetPdf doc={doc} grid={grid} items={items} perPcs={perPcs} perInner={perInner} perCarton={perCarton} issues={issues} />
         }
         fileName={`${doc.wh_number}-weight.pdf`}
         className="btn-primary"

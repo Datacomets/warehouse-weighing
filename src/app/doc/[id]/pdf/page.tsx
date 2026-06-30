@@ -16,6 +16,11 @@ export default async function PdfPage({ params }: { params: { id: string } }) {
     .from("count_grid_entries")
     .select("*")
     .eq("document_id", params.id);
+  const { data: issues } = await supabase
+    .from("issue_reports")
+    .select("*")
+    .eq("document_id", params.id)
+    .order("created_at", { ascending: false });
 
-  return <PdfClient doc={doc} items={items || []} grid={grid || []} />;
+  return <PdfClient doc={doc} items={items || []} grid={grid || []} issues={issues || []} />;
 }

@@ -7,7 +7,10 @@ import {
   countGridStats,
   totalPiecesCount,
   weightUnitLabel,
+  weightValuesByKind,
+  gridValuesSorted,
 } from "@/lib/documentSummary";
+import { ISSUE_TYPES, DEFECT_CODES } from "@/lib/mock-erp";
 
 // Dynamic import — @react-pdf/renderer is heavy and client-only.
 // Importing the whole button wrapper (which pulls in pdfDocs + react-pdf)
@@ -35,16 +38,23 @@ export function PdfClient({
   doc,
   items,
   grid,
+  issues = [],
 }: {
   doc: any;
   items: any[];
   grid: any[];
+  issues?: any[];
 }) {
   const perPcs = weightStatsByKind(items, "per_pcs");
   const perInner = weightStatsByKind(items, "per_inner");
   const perCarton = countGridStats(grid);
   const cartonCount = grid.length;
   const unitLabel = weightUnitLabel(doc.weight_unit);
+  const perPcsValues = weightValuesByKind(items, "per_pcs");
+  const perInnerValues = weightValuesByKind(items, "per_inner");
+  const perCartonValues = gridValuesSorted(grid);
+  const per100 = !!items.find((m) => m.kind === "per_pcs")?.per_100;
+  const qtyPerInner = items.find((m) => m.kind === "per_inner")?.qty_per_inner ?? null;
   const remainderPcs = Number(doc.remainder_pcs) || 0;
   const totalPcs = totalPiecesCount({
     qtyPerCarton: doc.qty_per_carton,
@@ -105,6 +115,47 @@ export function PdfClient({
         </table>
 
         <div className="mt-4 text-xs">
+          <p className="font-bold mb-1">รายละเอียดค่าที่ชั่ง ({unitLabel})</p>
+          <ReadingRow label="ชั่งต่อชิ้น (Per Pcs)" meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"} values={perPcsValues} />
+          <ReadingRow label="ชั่งต่อถุง/ถาด (Per Inner)" meta={qtyPerInner ? `${qtyPerInner} ชิ้น/Inner` : undefined} values={perInnerValues} />
+          <ReadingRow label="ชั่งต่อลัง (Per Carton)" values={perCartonValues} />
+        </div>
+
+        <div className="mt-4 text-xs">
+          <p className="font-bold mb-1">ปัญหาที่พบ ({issues.length})</p>
+          {issues.length === 0 ? (
+            <p className="text-outline">ไม่มีปัญหา</p>
+          ) : (
+            <table className="w-full border border-outline-variant/50">
+              <thead className="bg-surface-container">
+                <tr>
+                  <th className="p-1 text-left">ประเภท</th>
+                  <th className="p-1 text-left">รหัสของเสีย</th>
+                  <th className="p-1 text-right">จำนวน</th>
+                  <th className="p-1 text-left">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {issues.map((it: any, i: number) => (
+                  <tr key={i} className="border-t border-outline-variant/30">
+                    <td className="p-1">
+                      {ISSUE_TYPES.find((t) => t.value === it.issue_type)?.label || it.issue_type}
+                    </td>
+                    <td className="p-1">
+                      {it.defect_code
+                        ? DEFECT_CODES.find((d) => d.code === it.defect_code)?.label || it.defect_code
+                        : "-"}
+                    </td>
+                    <td className="p-1 text-right">{it.quantity ?? "-"}</td>
+                    <td className="p-1">{it.notes || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="mt-4 text-xs">
           <p><b>เริ่ม:</b> {fmtDateTime(doc.started_at)}</p>
           <p><b>สิ้นสุด:</b> {fmtDateTime(doc.ended_at)}</p>
           <p><b>Lead Time:</b> {leadTimeText(doc.started_at, doc.ended_at)}</p>
@@ -121,15 +172,35 @@ export function PdfClient({
         <PdfDownloadButtons
           doc={doc}
           grid={grid}
+          items={items}
           perPcs={perPcs}
           perInner={perInner}
           perCarton={perCarton}
+          issues={issues}
         />
 
         <button onClick={() => window.print()} className="btn-secondary">
           <Icon name="print" /> Print
         </button>
       </div>
+    </div>
+  );
+}
+
+function ReadingRow({ label, meta, values }: { label: string; meta?: string; values: number[] }) {
+  return (
+    <div className="mb-1.5">
+      <span className="font-semibold">
+        {label}
+        {meta ? ` — ${meta}` : ""}:{" "}
+      </span>
+      {values.length === 0 ? (
+        <span className="text-outline">ยังไม่มีค่าที่ชั่ง</span>
+      ) : (
+        <span className="text-on-surface-variant">
+          {values.map((v, i) => `#${i + 1} ${fmt(v)}`).join("  ·  ")}
+        </span>
+      )}
     </div>
   );
 }

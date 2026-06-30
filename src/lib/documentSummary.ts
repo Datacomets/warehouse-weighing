@@ -38,6 +38,29 @@ export function weightStatsByKind(items: MeasurementLike[], kind: WeightKind) {
   );
 }
 
+/** Sortable measurement shape with seq + metadata used for detail listings. */
+interface MeasurementDetailLike extends MeasurementLike {
+  seq?: number | null;
+}
+
+/** Individual measurement values for a kind, ordered by seq (entry order). */
+export function weightValuesByKind(
+  items: MeasurementDetailLike[],
+  kind: WeightKind
+): number[] {
+  return items
+    .filter((i) => i.kind === kind)
+    .sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
+    .map((i) => Number(i.value));
+}
+
+/** Grid (per-carton) values ordered row-major, matching how they were entered. */
+export function gridValuesSorted(grid: GridEntryLike[]): number[] {
+  return [...grid]
+    .sort((a, b) => a.row_index - b.row_index || a.col_index - b.col_index)
+    .map((g) => Number(g.value));
+}
+
 export interface GridEntryLike {
   row_index: number;
   col_index: number;
