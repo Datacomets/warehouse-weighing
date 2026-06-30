@@ -52,34 +52,75 @@ const styles = StyleSheet.create({
   sigLine: { borderBottomWidth: 1, borderBottomColor: "#191c1d", height: 30 },
   sigLabel: { textAlign: "center", marginTop: 4, color: "#767684" },
   small2: { fontSize: 9, marginBottom: 2 },
-  readingWrap: { flexDirection: "row", flexWrap: "wrap", marginTop: 2, marginBottom: 2 },
-  chip: {
+  rtable: { borderTopWidth: 0.5, borderLeftWidth: 0.5, borderColor: "#c6c5d5", marginTop: 3 },
+  rtr: { flexDirection: "row" },
+  rcell: {
+    flex: 1,
     fontSize: 8,
-    borderWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderBottomWidth: 0.5,
     borderColor: "#c6c5d5",
-    borderRadius: 3,
     paddingHorizontal: 3,
-    paddingVertical: 1,
-    marginRight: 3,
-    marginBottom: 3,
+    paddingVertical: 2,
   },
 });
 
-function ReadingList({ label, meta, unit, values }: { label: string; meta?: string; unit: string; values: number[] }) {
+const READING_COLS = 5;
+
+function CategoryBlock({
+  label,
+  meta,
+  unit,
+  values,
+  data,
+}: {
+  label: string;
+  meta?: string;
+  unit: string;
+  values: number[];
+  data: { avg: number; min: number; max: number; count: number };
+}) {
+  const rows: number[][] = [];
+  for (let i = 0; i < values.length; i += READING_COLS) rows.push(values.slice(i, i + READING_COLS));
   return (
-    <View style={{ marginBottom: 4 }}>
+    <View style={{ marginBottom: 10 }} wrap={false}>
       <Text style={[styles.small2, { fontWeight: 700 }]}>
         {label}
         {meta ? ` — ${meta}` : ""} ({unit})
       </Text>
+
+      {/* สรุป AVG / MIN / MAX / N */}
+      <View style={[styles.table, { marginTop: 3 }]}>
+        <View style={styles.tr}>
+          <Text style={styles.th}>AVG</Text>
+          <Text style={styles.th}>MIN</Text>
+          <Text style={styles.th}>MAX</Text>
+          <Text style={styles.th}>N</Text>
+        </View>
+        <View style={styles.tr}>
+          <Text style={styles.td}>{fmt(data.avg)}</Text>
+          <Text style={styles.td}>{fmt(data.min)}</Text>
+          <Text style={styles.td}>{fmt(data.max)}</Text>
+          <Text style={styles.td}>{data.count}</Text>
+        </View>
+      </View>
+
+      {/* ค่าที่ชั่งจริง */}
       {values.length === 0 ? (
-        <Text style={styles.small}>ยังไม่มีค่าที่ชั่ง</Text>
+        <Text style={[styles.small, { marginTop: 3 }]}>ยังไม่มีค่าที่ชั่ง</Text>
       ) : (
-        <View style={styles.readingWrap}>
-          {values.map((v, i) => (
-            <Text key={i} style={styles.chip}>
-              #{i + 1} {fmt(v)}
-            </Text>
+        <View style={styles.rtable}>
+          {rows.map((row, r) => (
+            <View style={styles.rtr} key={r}>
+              {Array.from({ length: READING_COLS }).map((_, c) => {
+                const v = row[c];
+                return (
+                  <Text style={styles.rcell} key={c}>
+                    {v != null ? fmt(v) : ""}
+                  </Text>
+                );
+              })}
+            </View>
           ))}
         </View>
       )}
@@ -136,36 +177,26 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           <Cell label="Net Weight" value={`${doc.net_weight ?? "-"} ${doc.weight_unit || "kg"}`} />
         </View>
 
-        <View style={styles.table}>
-          <View style={styles.tr}>
-            <Text style={styles.th}>หมวด</Text>
-            <Text style={styles.th}>AVG</Text>
-            <Text style={styles.th}>MIN</Text>
-            <Text style={styles.th}>MAX</Text>
-            <Text style={styles.th}>N</Text>
-          </View>
-          <Trow label="Per Pcs" data={perPcs} />
-          <Trow label="Per Inner/Tray/Bag" data={perInner} />
-          <Trow label="Per Carton" data={perCarton} />
-        </View>
-
-        <Text style={[styles.small2, { marginTop: 12, fontWeight: 700 }]}>รายละเอียดค่าที่ชั่ง</Text>
-        <ReadingList
+        <Text style={[styles.small2, { marginTop: 12, fontWeight: 700 }]}>รายละเอียดการชั่ง</Text>
+        <CategoryBlock
           label="ชั่งต่อชิ้น (Per Pcs)"
           meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"}
           unit={unitLabel}
           values={perPcsValues}
+          data={perPcs}
         />
-        <ReadingList
+        <CategoryBlock
           label="ชั่งต่อถุง/ถาด (Per Inner)"
           meta={qtyPerInner ? `${qtyPerInner} ชิ้น/Inner` : undefined}
           unit={unitLabel}
           values={perInnerValues}
+          data={perInner}
         />
-        <ReadingList
+        <CategoryBlock
           label="ชั่งต่อลัง (Per Carton)"
           unit={unitLabel}
           values={perCartonValues}
+          data={perCarton}
         />
 
         <Text style={[styles.small2, { marginTop: 8, fontWeight: 700 }]}>
@@ -303,14 +334,3 @@ function Cell({ label, value, full }: { label: string; value: any; full?: boolea
   );
 }
 
-function Trow({ label, data }: { label: string; data: any }) {
-  return (
-    <View style={styles.tr}>
-      <Text style={styles.td}>{label}</Text>
-      <Text style={styles.td}>{fmt(data.avg)}</Text>
-      <Text style={styles.td}>{fmt(data.min)}</Text>
-      <Text style={styles.td}>{fmt(data.max)}</Text>
-      <Text style={styles.td}>{data.count}</Text>
-    </View>
-  );
-}

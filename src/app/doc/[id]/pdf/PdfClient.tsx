@@ -97,28 +97,11 @@ export function PdfClient({
           <Row label="Net" value={`${doc.net_weight ?? "-"} ${unitLabel}`} />
         </div>
 
-        <table className="w-full text-xs mt-4 border border-outline-variant/50">
-          <thead className="bg-surface-container">
-            <tr>
-              <th className="p-2 text-left">หมวด</th>
-              <th className="p-2 text-right">AVG</th>
-              <th className="p-2 text-right">MIN</th>
-              <th className="p-2 text-right">MAX</th>
-              <th className="p-2 text-right">N</th>
-            </tr>
-          </thead>
-          <tbody>
-            <Trow label="Per Pcs" data={perPcs} />
-            <Trow label="Per Inner/Tray/Bag" data={perInner} />
-            <Trow label="Per Carton" data={perCarton} />
-          </tbody>
-        </table>
-
         <div className="mt-4 text-xs">
-          <p className="font-bold mb-1">รายละเอียดค่าที่ชั่ง ({unitLabel})</p>
-          <ReadingRow label="ชั่งต่อชิ้น (Per Pcs)" meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"} values={perPcsValues} />
-          <ReadingRow label="ชั่งต่อถุง/ถาด (Per Inner)" meta={qtyPerInner ? `${qtyPerInner} ชิ้น/Inner` : undefined} values={perInnerValues} />
-          <ReadingRow label="ชั่งต่อลัง (Per Carton)" values={perCartonValues} />
+          <p className="font-bold mb-1">รายละเอียดการชั่ง ({unitLabel})</p>
+          <CategoryBlock label="ชั่งต่อชิ้น (Per Pcs)" meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"} data={perPcs} values={perPcsValues} />
+          <CategoryBlock label="ชั่งต่อถุง/ถาด (Per Inner)" meta={qtyPerInner ? `${qtyPerInner} ชิ้น/Inner` : undefined} data={perInner} values={perInnerValues} />
+          <CategoryBlock label="ชั่งต่อลัง (Per Carton)" data={perCarton} values={perCartonValues} />
         </div>
 
         <div className="mt-4 text-xs">
@@ -187,19 +170,67 @@ export function PdfClient({
   );
 }
 
-function ReadingRow({ label, meta, values }: { label: string; meta?: string; values: number[] }) {
+function CategoryBlock({
+  label,
+  meta,
+  data,
+  values,
+}: {
+  label: string;
+  meta?: string;
+  data: { avg: number; min: number; max: number; count: number };
+  values: number[];
+}) {
+  const cols = 5;
+  const rows: number[][] = [];
+  for (let i = 0; i < values.length; i += cols) rows.push(values.slice(i, i + cols));
   return (
-    <div className="mb-1.5">
-      <span className="font-semibold">
+    <div className="mb-3">
+      <p className="font-semibold mb-0.5">
         {label}
-        {meta ? ` — ${meta}` : ""}:{" "}
-      </span>
+        {meta ? ` — ${meta}` : ""}
+      </p>
+
+      {/* สรุป AVG / MIN / MAX / N */}
+      <table className="w-full border border-outline-variant/50 mb-1">
+        <thead className="bg-surface-container">
+          <tr>
+            <th className="p-1 text-right">AVG</th>
+            <th className="p-1 text-right">MIN</th>
+            <th className="p-1 text-right">MAX</th>
+            <th className="p-1 text-right">N</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="p-1 text-right">{fmt(data.avg)}</td>
+            <td className="p-1 text-right">{fmt(data.min)}</td>
+            <td className="p-1 text-right">{fmt(data.max)}</td>
+            <td className="p-1 text-right">{data.count}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ค่าที่ชั่งจริง */}
       {values.length === 0 ? (
-        <span className="text-outline">ยังไม่มีค่าที่ชั่ง</span>
+        <p className="text-outline">ยังไม่มีค่าที่ชั่ง</p>
       ) : (
-        <span className="text-on-surface-variant">
-          {values.map((v, i) => `#${i + 1} ${fmt(v)}`).join("  ·  ")}
-        </span>
+        <table className="w-full border-l border-t border-outline-variant/50">
+          <tbody>
+            {rows.map((row, r) => (
+              <tr key={r}>
+                {Array.from({ length: cols }).map((_, c) => {
+                  const v = row[c];
+                  return (
+                    <td key={c} className="border-r border-b border-outline-variant/50 px-1 py-0.5 w-1/5">
+                      {v != null ? fmt(v) : ""}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
@@ -211,18 +242,6 @@ function Row({ label, value, className }: { label: string; value: any; className
       <span className="text-outline">{label}: </span>
       <span className="font-semibold">{value || "-"}</span>
     </div>
-  );
-}
-
-function Trow({ label, data }: { label: string; data: any }) {
-  return (
-    <tr className="border-t border-outline-variant/30">
-      <td className="p-2">{label}</td>
-      <td className="p-2 text-right">{fmt(data.avg)}</td>
-      <td className="p-2 text-right">{fmt(data.min)}</td>
-      <td className="p-2 text-right">{fmt(data.max)}</td>
-      <td className="p-2 text-right">{data.count}</td>
-    </tr>
   );
 }
 
