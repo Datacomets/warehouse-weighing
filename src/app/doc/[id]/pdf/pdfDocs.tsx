@@ -20,7 +20,13 @@ const defectLabel = (c: string) =>
 // right edge of the page. Insert zero-width spaces after separators to give
 // the line breaker somewhere to wrap.
 const softBreak = (s: unknown): string =>
-  s == null ? "" : String(s).replace(/([,/|_])/g, "$1\u200B");
+  s == null
+    ? ""
+    : String(s)
+        // break after common separators
+        .replace(/([,/|_])/g, "$1\u200B")
+        // and inside any long run with no break opportunity at all
+        .replace(/([^\s\u200B]{14})(?=[^\s\u200B])/g, "$1\u200B");
 
 // Helvetica (the @react-pdf default) has no Thai glyphs, so Thai text in
 // the PDF rendered as garbled boxes. @react-pdf needs TTF/OTF — and modern
@@ -42,7 +48,7 @@ Font.register({
 });
 
 const styles = StyleSheet.create({
-  page: { padding: 28, fontSize: 10, fontFamily: "Sarabun", color: "#191c1d" },
+  page: { padding: 28, fontSize: 10, fontFamily: "Sarabun", color: "#191c1d", letterSpacing: 0.25 },
   h1: { fontSize: 16, fontWeight: 700, color: "#00003c", marginBottom: 2 },
   small: { fontSize: 8, color: "#767684" },
   row: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: "#c6c5d5", paddingBottom: 6, marginBottom: 8 },
@@ -170,7 +176,7 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           <Cell label="PO" value={doc.po_number} />
           <Cell label="Item Code" value={softBreak(doc.item_code)} />
           <Cell label="Supplier Item Name" value={softBreak(doc.supplier)} />
-          <Cell label="Description" value={softBreak(doc.description)} full />
+          <Cell label="Description" value={softBreak(doc.description)} />
           <Cell label="Lot Number" value={doc.lot_number} />
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
           <Cell label="Scale" value={doc.scale_name} />

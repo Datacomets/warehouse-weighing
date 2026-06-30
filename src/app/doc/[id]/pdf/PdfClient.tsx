@@ -65,7 +65,7 @@ export function PdfClient({
   return (
     <div className="flex flex-col gap-4">
       {/* Preview card resembling A4 */}
-      <div className="card max-w-3xl mx-auto" style={{ aspectRatio: "1 / 1.414" }}>
+      <div className="card max-w-3xl mx-auto" style={{ aspectRatio: "1 / 1.414", letterSpacing: "0.025em" }}>
         <div className="flex items-center justify-between border-b border-outline-variant pb-3">
           <div>
             <h1 className="font-headline font-extrabold text-primary text-xl">COMETS GR</h1>
@@ -82,7 +82,7 @@ export function PdfClient({
           <Row label="PO" value={doc.po_number} />
           <Row label="Item Code" value={doc.item_code} />
           <Row label="ชื่อสินค้าฝั่ง Supplier" value={doc.supplier} />
-          <Row label="Description" value={doc.description} className="col-span-2" />
+          <Row label="Description" value={doc.description} />
           <Row label="Lot Number" value={doc.lot_number} />
           <Row label="Delivery" value={fmtDate(doc.delivery_date)} />
           <Row label="Scale" value={doc.scale_name} />
