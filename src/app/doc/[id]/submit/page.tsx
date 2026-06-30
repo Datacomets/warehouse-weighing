@@ -249,21 +249,20 @@ function WeightDetail({
         <p className="text-xs text-outline mt-1">ยังไม่มีค่าที่ชั่ง</p>
       ) : (
         <>
+          <div className="text-xs text-outline mt-1">
+            AVG {fmt(data.avg)} · MIN {fmt(data.min)} · MAX {fmt(data.max)} · {data.count} ครั้ง ({unit})
+          </div>
+          {extra && <div className="text-xs text-tertiary-fixed-dim mt-0.5">{extra}</div>}
           <div className="flex flex-wrap gap-1.5 mt-2">
             {values.map((v, i) => (
               <span
                 key={i}
-                className="inline-flex items-baseline gap-1 bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 py-1 text-xs"
+                className="inline-flex items-baseline bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 py-1 text-xs"
               >
-                <span className="text-outline">#{i + 1}</span>
                 <span className="font-semibold text-primary">{fmt(v)}</span>
               </span>
             ))}
           </div>
-          <div className="text-xs text-outline mt-2">
-            AVG {fmt(data.avg)} · MIN {fmt(data.min)} · MAX {fmt(data.max)} · {data.count} ครั้ง ({unit})
-          </div>
-          {extra && <div className="text-xs text-tertiary-fixed-dim mt-0.5">{extra}</div>}
         </>
       )}
     </div>
