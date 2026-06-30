@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
   metaPill: {
     fontSize: 7,
     fontWeight: 700,
-    color: "#4a4459",
-    backgroundColor: "#e7e0ec",
+    color: "#321d00",
+    backgroundColor: "#ffddb7",
     borderRadius: 8,
     paddingHorizontal: 5,
     paddingVertical: 1,

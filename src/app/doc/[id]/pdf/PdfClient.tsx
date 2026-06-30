@@ -218,7 +218,7 @@ function CategoryBlock({
       <div className="flex items-center justify-between flex-wrap gap-1">
         <span className="font-semibold">{label}</span>
         {meta && !skipped && (
-          <span className="text-[10px] font-bold text-on-tertiary-container bg-tertiary-container/50 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-bold text-tertiary-container bg-tertiary-fixed px-2 py-0.5 rounded-full">
             {meta}
           </span>
         )}
