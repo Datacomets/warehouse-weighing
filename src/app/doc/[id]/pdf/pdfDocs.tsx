@@ -15,6 +15,13 @@ const issueTypeLabel = (v: string) => ISSUE_TYPES.find((t) => t.value === v)?.la
 const defectLabel = (c: string) =>
   c ? DEFECT_CODES.find((d) => d.code === c)?.label || c : "-";
 
+// Packed item descriptions/codes are comma-delimited with no spaces, so the
+// PDF text layout treats the whole string as one word and lets it run off the
+// right edge of the page. Insert zero-width spaces after separators to give
+// the line breaker somewhere to wrap.
+const softBreak = (s: unknown): string =>
+  s == null ? "" : String(s).replace(/([,/|_])/g, "$1\u200B");
+
 // Helvetica (the @react-pdf default) has no Thai glyphs, so Thai text in
 // the PDF rendered as garbled boxes. @react-pdf needs TTF/OTF — and modern
 // @fontsource only ships woff/woff2 — so we pull Sarabun TTF from
@@ -52,20 +59,32 @@ const styles = StyleSheet.create({
   sigLine: { borderBottomWidth: 1, borderBottomColor: "#191c1d", height: 30 },
   sigLabel: { textAlign: "center", marginTop: 4, color: "#767684" },
   small2: { fontSize: 9, marginBottom: 2 },
-  rtable: { borderTopWidth: 0.5, borderLeftWidth: 0.5, borderColor: "#c6c5d5", marginTop: 3 },
-  rtr: { flexDirection: "row" },
-  rcell: {
-    flex: 1,
+  catLabel: { fontSize: 9, fontWeight: 700 },
+  metaPill: {
+    fontSize: 7,
+    fontWeight: 700,
+    color: "#4a4459",
+    backgroundColor: "#e7e0ec",
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  statLine: { fontSize: 8, color: "#5b5b66", marginTop: 1 },
+  extraLine: { fontSize: 8, color: "#7a5b00", marginTop: 1 },
+  chipWrap: { flexDirection: "row", flexWrap: "wrap", marginTop: 3 },
+  chip: {
     fontSize: 8,
-    borderRightWidth: 0.5,
-    borderBottomWidth: 0.5,
+    fontWeight: 700,
+    color: "#00003c",
+    borderWidth: 0.5,
     borderColor: "#c6c5d5",
-    paddingHorizontal: 3,
+    borderRadius: 4,
+    paddingHorizontal: 5,
     paddingVertical: 2,
+    marginRight: 4,
+    marginBottom: 4,
   },
 });
-
-const READING_COLS = 5;
 
 function CategoryBlock({
   label,
@@ -73,56 +92,44 @@ function CategoryBlock({
   unit,
   values,
   data,
+  skipped,
+  reason,
+  extra,
 }: {
   label: string;
   meta?: string;
   unit: string;
   values: number[];
   data: { avg: number; min: number; max: number; count: number };
+  skipped?: boolean;
+  reason?: string | null;
+  extra?: string;
 }) {
-  const rows: number[][] = [];
-  for (let i = 0; i < values.length; i += READING_COLS) rows.push(values.slice(i, i + READING_COLS));
   return (
-    <View style={{ marginBottom: 10 }} wrap={false}>
-      <Text style={[styles.small2, { fontWeight: 700 }]}>
-        {label}
-        {meta ? ` — ${meta}` : ""} ({unit})
-      </Text>
-
-      {/* สรุป AVG / MIN / MAX / N */}
-      <View style={[styles.table, { marginTop: 3 }]}>
-        <View style={styles.tr}>
-          <Text style={styles.th}>AVG</Text>
-          <Text style={styles.th}>MIN</Text>
-          <Text style={styles.th}>MAX</Text>
-          <Text style={styles.th}>N</Text>
-        </View>
-        <View style={styles.tr}>
-          <Text style={styles.td}>{fmt(data.avg)}</Text>
-          <Text style={styles.td}>{fmt(data.min)}</Text>
-          <Text style={styles.td}>{fmt(data.max)}</Text>
-          <Text style={styles.td}>{data.count}</Text>
-        </View>
+    <View style={{ marginBottom: 8 }} wrap={false}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={styles.catLabel}>{label}</Text>
+        {meta && !skipped ? <Text style={styles.metaPill}>{meta}</Text> : null}
       </View>
 
-      {/* ค่าที่ชั่งจริง */}
-      {values.length === 0 ? (
-        <Text style={[styles.small, { marginTop: 3 }]}>ยังไม่มีค่าที่ชั่ง</Text>
+      {skipped ? (
+        <Text style={styles.statLine}>ข้าม{reason ? `: ${reason}` : ""}</Text>
+      ) : values.length === 0 ? (
+        <Text style={styles.statLine}>ยังไม่มีค่าที่ชั่ง</Text>
       ) : (
-        <View style={styles.rtable}>
-          {rows.map((row, r) => (
-            <View style={styles.rtr} key={r}>
-              {Array.from({ length: READING_COLS }).map((_, c) => {
-                const v = row[c];
-                return (
-                  <Text style={styles.rcell} key={c}>
-                    {v != null ? fmt(v) : ""}
-                  </Text>
-                );
-              })}
-            </View>
-          ))}
-        </View>
+        <>
+          <Text style={styles.statLine}>
+            AVG {fmt(data.avg)} · MIN {fmt(data.min)} · MAX {fmt(data.max)} · {data.count} ครั้ง ({unit})
+          </Text>
+          {extra ? <Text style={styles.extraLine}>{extra}</Text> : null}
+          <View style={styles.chipWrap}>
+            {values.map((v, i) => (
+              <Text key={i} style={styles.chip}>
+                {fmt(v)}
+              </Text>
+            ))}
+          </View>
+        </>
       )}
     </View>
   );
@@ -161,9 +168,9 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
         <View style={styles.grid}>
           <Cell label="LOT" value={doc.lot} />
           <Cell label="PO" value={doc.po_number} />
-          <Cell label="Item Code" value={doc.item_code} />
-          <Cell label="Supplier Item Name" value={doc.supplier} />
-          <Cell label="Description" value={doc.description} full />
+          <Cell label="Item Code" value={softBreak(doc.item_code)} />
+          <Cell label="Supplier Item Name" value={softBreak(doc.supplier)} />
+          <Cell label="Description" value={softBreak(doc.description)} full />
           <Cell label="Lot Number" value={doc.lot_number} />
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
           <Cell label="Scale" value={doc.scale_name} />
@@ -177,26 +184,37 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           <Cell label="Net Weight" value={`${doc.net_weight ?? "-"} ${doc.weight_unit || "kg"}`} />
         </View>
 
-        <Text style={[styles.small2, { marginTop: 12, fontWeight: 700 }]}>รายละเอียดการชั่ง</Text>
+        <Text style={[styles.small2, { marginTop: 12, fontWeight: 700 }]}>รายละเอียดการชั่ง (หน่วย: {unitLabel})</Text>
         <CategoryBlock
           label="ชั่งต่อชิ้น (Per Pcs)"
           meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"}
           unit={unitLabel}
           values={perPcsValues}
           data={perPcs}
+          skipped={!!doc.skip_per_pcs}
+          reason={doc.skip_reason_per_pcs}
+          extra={
+            per100 && perPcs.count > 0
+              ? `น้ำหนักต่อ 1 ชิ้น ≈ ${fmt(perPcs.avg / 100, 5)} ${unitLabel}`
+              : undefined
+          }
         />
         <CategoryBlock
           label="ชั่งต่อถุง/ถาด (Per Inner)"
-          meta={qtyPerInner ? `${qtyPerInner} ชิ้น/Inner` : undefined}
+          meta={qtyPerInner ? `${qtyPerInner} ชิ้น / Inner` : undefined}
           unit={unitLabel}
           values={perInnerValues}
           data={perInner}
+          skipped={!!doc.skip_per_inner}
+          reason={doc.skip_reason_per_inner}
         />
         <CategoryBlock
           label="ชั่งต่อลัง (Per Carton)"
           unit={unitLabel}
           values={perCartonValues}
           data={perCarton}
+          skipped={!!doc.skip_per_carton}
+          reason={doc.skip_reason_per_carton}
         />
 
         <Text style={[styles.small2, { marginTop: 8, fontWeight: 700 }]}>
@@ -267,9 +285,9 @@ export function CountSheetPdf({ doc, grid }: any) {
 
         <View style={styles.grid}>
           <Cell label="LOT" value={doc.lot} />
-          <Cell label="Item" value={doc.item_code} />
+          <Cell label="Item" value={softBreak(doc.item_code)} />
           <Cell label="Lot Number" value={doc.lot_number} />
-          <Cell label="Description" value={doc.description} full />
+          <Cell label="Description" value={softBreak(doc.description)} full />
         </View>
 
         <View style={{ marginTop: 12 }}>

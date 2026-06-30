@@ -98,10 +98,34 @@ export function PdfClient({
         </div>
 
         <div className="mt-4 text-xs">
-          <p className="font-bold mb-1">รายละเอียดการชั่ง ({unitLabel})</p>
-          <CategoryBlock label="ชั่งต่อชิ้น (Per Pcs)" meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"} data={perPcs} values={perPcsValues} />
-          <CategoryBlock label="ชั่งต่อถุง/ถาด (Per Inner)" meta={qtyPerInner ? `${qtyPerInner} ชิ้น/Inner` : undefined} data={perInner} values={perInnerValues} />
-          <CategoryBlock label="ชั่งต่อลัง (Per Carton)" data={perCarton} values={perCartonValues} />
+          <p className="font-bold mb-1">รายละเอียดการชั่ง (หน่วย: {unitLabel})</p>
+          <CategoryBlock
+            label="ชั่งต่อชิ้น (Per Pcs)"
+            meta={per100 ? "Per 100 Pcs" : "Per 1 Pcs"}
+            unit={unitLabel}
+            data={perPcs}
+            values={perPcsValues}
+            skipped={!!doc.skip_per_pcs}
+            reason={doc.skip_reason_per_pcs}
+            extra={per100 && perPcs.count > 0 ? `น้ำหนักต่อ 1 ชิ้น ≈ ${fmt(perPcs.avg / 100, 5)} ${unitLabel}` : undefined}
+          />
+          <CategoryBlock
+            label="ชั่งต่อถุง/ถาด (Per Inner)"
+            meta={qtyPerInner ? `${qtyPerInner} ชิ้น / Inner` : undefined}
+            unit={unitLabel}
+            data={perInner}
+            values={perInnerValues}
+            skipped={!!doc.skip_per_inner}
+            reason={doc.skip_reason_per_inner}
+          />
+          <CategoryBlock
+            label="ชั่งต่อลัง (Per Carton)"
+            unit={unitLabel}
+            data={perCarton}
+            values={perCartonValues}
+            skipped={!!doc.skip_per_carton}
+            reason={doc.skip_reason_per_carton}
+          />
         </div>
 
         <div className="mt-4 text-xs">
@@ -173,64 +197,54 @@ export function PdfClient({
 function CategoryBlock({
   label,
   meta,
+  unit,
   data,
   values,
+  skipped,
+  reason,
+  extra,
 }: {
   label: string;
   meta?: string;
+  unit: string;
   data: { avg: number; min: number; max: number; count: number };
   values: number[];
+  skipped?: boolean;
+  reason?: string | null;
+  extra?: string;
 }) {
-  const cols = 5;
-  const rows: number[][] = [];
-  for (let i = 0; i < values.length; i += cols) rows.push(values.slice(i, i + cols));
   return (
-    <div className="mb-3">
-      <p className="font-semibold mb-0.5">
-        {label}
-        {meta ? ` — ${meta}` : ""}
-      </p>
+    <div className="mb-3 border-t border-outline-variant/30 pt-2 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between flex-wrap gap-1">
+        <span className="font-semibold">{label}</span>
+        {meta && !skipped && (
+          <span className="text-[10px] font-bold text-on-tertiary-container bg-tertiary-container/50 px-2 py-0.5 rounded-full">
+            {meta}
+          </span>
+        )}
+      </div>
 
-      {/* สรุป AVG / MIN / MAX / N */}
-      <table className="w-full border border-outline-variant/50 mb-1">
-        <thead className="bg-surface-container">
-          <tr>
-            <th className="p-1 text-right">AVG</th>
-            <th className="p-1 text-right">MIN</th>
-            <th className="p-1 text-right">MAX</th>
-            <th className="p-1 text-right">N</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="p-1 text-right">{fmt(data.avg)}</td>
-            <td className="p-1 text-right">{fmt(data.min)}</td>
-            <td className="p-1 text-right">{fmt(data.max)}</td>
-            <td className="p-1 text-right">{data.count}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ค่าที่ชั่งจริง */}
-      {values.length === 0 ? (
-        <p className="text-outline">ยังไม่มีค่าที่ชั่ง</p>
+      {skipped ? (
+        <p className="text-outline italic mt-0.5">ข้าม{reason ? `: ${reason}` : ""}</p>
+      ) : values.length === 0 ? (
+        <p className="text-outline mt-0.5">ยังไม่มีค่าที่ชั่ง</p>
       ) : (
-        <table className="w-full border-l border-t border-outline-variant/50">
-          <tbody>
-            {rows.map((row, r) => (
-              <tr key={r}>
-                {Array.from({ length: cols }).map((_, c) => {
-                  const v = row[c];
-                  return (
-                    <td key={c} className="border-r border-b border-outline-variant/50 px-1 py-0.5 w-1/5">
-                      {v != null ? fmt(v) : ""}
-                    </td>
-                  );
-                })}
-              </tr>
+        <>
+          <p className="text-outline mt-0.5">
+            AVG {fmt(data.avg)} · MIN {fmt(data.min)} · MAX {fmt(data.max)} · {data.count} ครั้ง ({unit})
+          </p>
+          {extra && <p className="text-tertiary-fixed-dim">{extra}</p>}
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {values.map((v, i) => (
+              <span
+                key={i}
+                className="inline-flex items-baseline bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 py-1"
+              >
+                <span className="font-semibold text-primary">{fmt(v)}</span>
+              </span>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </>
       )}
     </div>
   );
@@ -238,7 +252,7 @@ function CategoryBlock({
 
 function Row({ label, value, className }: { label: string; value: any; className?: string }) {
   return (
-    <div className={className}>
+    <div className={`break-words ${className ?? ""}`}>
       <span className="text-outline">{label}: </span>
       <span className="font-semibold">{value || "-"}</span>
     </div>
