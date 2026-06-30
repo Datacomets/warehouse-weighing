@@ -48,7 +48,7 @@ Font.register({
 });
 
 const styles = StyleSheet.create({
-  page: { padding: 28, fontSize: 10, fontFamily: "Sarabun", color: "#191c1d", letterSpacing: 0.25 },
+  page: { padding: 28, fontSize: 10, fontFamily: "Sarabun", color: "#191c1d" },
   h1: { fontSize: 16, fontWeight: 700, color: "#00003c", marginBottom: 2 },
   small: { fontSize: 8, color: "#767684" },
   row: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: "#c6c5d5", paddingBottom: 6, marginBottom: 8 },
@@ -101,6 +101,7 @@ function CategoryBlock({
   skipped,
   reason,
   extra,
+  first,
 }: {
   label: string;
   meta?: string;
@@ -110,9 +111,16 @@ function CategoryBlock({
   skipped?: boolean;
   reason?: string | null;
   extra?: string;
+  first?: boolean;
 }) {
   return (
-    <View style={{ marginBottom: 8 }} wrap={false}>
+    <View
+      style={[
+        { marginBottom: 8 },
+        first ? {} : { borderTopWidth: 0.5, borderTopColor: "#c6c5d5", paddingTop: 6, marginTop: 2 },
+      ]}
+      wrap={false}
+    >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={styles.catLabel}>{label}</Text>
         {meta && !skipped ? <Text style={styles.metaPill}>{meta}</Text> : null}
@@ -197,6 +205,7 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           unit={unitLabel}
           values={perPcsValues}
           data={perPcs}
+          first
           skipped={!!doc.skip_per_pcs}
           reason={doc.skip_reason_per_pcs}
           extra={
