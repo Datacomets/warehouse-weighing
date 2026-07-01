@@ -31,10 +31,11 @@ const softBreak = (s: unknown): string =>
   s == null
     ? ""
     : String(s)
-        // break after common separators
-        .replace(/([,/|_])/g, "$1\u200B")
-        // and inside any long run with no break opportunity at all
-        .replace(/([^\s\u200B]{14})(?=[^\s\u200B])/g, "$1\u200B");
+        // add a real space after separators so the line can wrap there
+        // (react-pdf renders zero-width spaces incorrectly \u2014 glyphs overlap)
+        .replace(/([,/|_])(?=\S)/g, "$1 ")
+        // and inside any long run that still has no break opportunity
+        .replace(/(\S{14})(?=\S)/g, "$1 ");
 
 // Helvetica (the @react-pdf default) has no Thai glyphs, so Thai text in
 // the PDF rendered as garbled boxes. @react-pdf needs TTF/OTF — and modern
