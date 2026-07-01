@@ -1,5 +1,5 @@
 "use client";
-import { Document, Font, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Font, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { fmt, fmtDate, fmtDateTime, leadTimeText } from "@/lib/stats";
 import {
   countGridStats,
@@ -115,6 +115,15 @@ const styles = StyleSheet.create({
   },
   rseqCell: { flex: 0.42, color: "#767684", textAlign: "center", backgroundColor: "#f4f4f6" },
   rHead: { backgroundColor: "#edeeef", fontWeight: 700, textAlign: "center", color: "#191c1d" },
+  issuePhotoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    borderBottomWidth: 1,
+    borderBottomColor: "#c6c5d5",
+    padding: 4,
+    gap: 4,
+  },
+  issuePhoto: { width: 72, height: 72, objectFit: "cover", borderWidth: 0.5, borderColor: "#c6c5d5" },
 });
 
 const READING_COLS = 5;
@@ -290,29 +299,43 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           reason={doc.skip_reason_per_carton}
         />
 
-        <Text style={[styles.small2, { marginTop: 8, fontWeight: 700 }]}>
-          ปัญหาที่พบ ({issueList.length})
-        </Text>
-        {issueList.length === 0 ? (
-          <Text style={styles.small}>ไม่มีปัญหา </Text>
-        ) : (
-          <View style={[styles.table, { marginTop: 4 }]}>
-            <View style={styles.tr}>
-              <Text style={[styles.th, { flex: 1.2 }]}>ประเภท </Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>รหัสของเสีย </Text>
-              <Text style={[styles.th, { flex: 0.6 }]}>จำนวน </Text>
-              <Text style={[styles.th, { flex: 2 }]}>หมายเหตุ </Text>
-            </View>
-            {issueList.map((it: any, i: number) => (
-              <View style={styles.tr} key={i}>
-                <Text style={[styles.td, { flex: 1.2 }]}>{issueTypeLabel(it.issue_type)}</Text>
-                <Text style={[styles.td, { flex: 1.5 }]}>{defectLabel(it.defect_code)}</Text>
-                <Text style={[styles.td, { flex: 0.6 }]}>{it.quantity ?? "-"}</Text>
-                <Text style={[styles.td, { flex: 2 }]}>{it.notes ? noClip(it.notes) : "-"}</Text>
+        <View wrap={false}>
+          <Text style={[styles.small2, { marginTop: 8, fontWeight: 700 }]}>
+            ปัญหาที่พบ ({issueList.length})
+          </Text>
+          {issueList.length === 0 ? (
+            <Text style={styles.small}>ไม่มีปัญหา </Text>
+          ) : (
+            <View style={[styles.table, { marginTop: 4 }]}>
+              <View style={styles.tr}>
+                <Text style={[styles.th, { flex: 1.2 }]}>ประเภท </Text>
+                <Text style={[styles.th, { flex: 1.5 }]}>รหัสของเสีย </Text>
+                <Text style={[styles.th, { flex: 0.6 }]}>จำนวน </Text>
+                <Text style={[styles.th, { flex: 2 }]}>หมายเหตุ </Text>
               </View>
-            ))}
-          </View>
-        )}
+              {issueList.flatMap((it: any, i: number) => {
+                const rows = [
+                  <View style={styles.tr} key={`r${i}`}>
+                    <Text style={[styles.td, { flex: 1.2 }]}>{issueTypeLabel(it.issue_type)}</Text>
+                    <Text style={[styles.td, { flex: 1.5 }]}>{defectLabel(it.defect_code)}</Text>
+                    <Text style={[styles.td, { flex: 0.6 }]}>{it.quantity ?? "-"}</Text>
+                    <Text style={[styles.td, { flex: 2 }]}>{it.notes ? noClip(it.notes) : "-"}</Text>
+                  </View>,
+                ];
+                if (Array.isArray(it.photos) && it.photos.length > 0) {
+                  rows.push(
+                    <View style={styles.issuePhotoRow} key={`p${i}`}>
+                      {it.photos.map((url: string, j: number) => (
+                        <Image key={j} src={url} style={styles.issuePhoto} />
+                      ))}
+                    </View>
+                  );
+                }
+                return rows;
+              })}
+            </View>
+          )}
+        </View>
 
         <View style={{ marginTop: 12 }}>
           <Text style={styles.small2}>เริ่ม: {fmtDateTime(doc.started_at)}</Text>

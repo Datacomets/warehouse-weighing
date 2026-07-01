@@ -150,20 +150,37 @@ export function PdfClient({
                 </tr>
               </thead>
               <tbody>
-                {issues.map((it: any, i: number) => (
-                  <tr key={i} className="border-t border-outline-variant/30">
-                    <td className="p-1">
-                      {ISSUE_TYPES.find((t) => t.value === it.issue_type)?.label || it.issue_type}
-                    </td>
-                    <td className="p-1">
-                      {it.defect_code
-                        ? DEFECT_CODES.find((d) => d.code === it.defect_code)?.label || it.defect_code
-                        : "-"}
-                    </td>
-                    <td className="p-1 text-right">{it.quantity ?? "-"}</td>
-                    <td className="p-1">{it.notes || "-"}</td>
-                  </tr>
-                ))}
+                {issues.flatMap((it: any, i: number) => {
+                  const rows = [
+                    <tr key={`r${i}`} className="border-t border-outline-variant/30">
+                      <td className="p-1">
+                        {ISSUE_TYPES.find((t) => t.value === it.issue_type)?.label || it.issue_type}
+                      </td>
+                      <td className="p-1">
+                        {it.defect_code
+                          ? DEFECT_CODES.find((d) => d.code === it.defect_code)?.label || it.defect_code
+                          : "-"}
+                      </td>
+                      <td className="p-1 text-right">{it.quantity ?? "-"}</td>
+                      <td className="p-1">{it.notes || "-"}</td>
+                    </tr>,
+                  ];
+                  if (Array.isArray(it.photos) && it.photos.length > 0) {
+                    rows.push(
+                      <tr key={`p${i}`} className="border-t border-outline-variant/30">
+                        <td colSpan={4} className="p-1">
+                          <div className="flex flex-wrap gap-1">
+                            {it.photos.map((url: string, j: number) => (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img key={j} src={url} alt="" className="w-16 h-16 object-cover rounded border border-outline-variant/40" />
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return rows;
+                })}
               </tbody>
             </table>
           )}
