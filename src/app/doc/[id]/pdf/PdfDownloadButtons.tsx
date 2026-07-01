@@ -11,6 +11,8 @@ export default function PdfDownloadButtons({
   perInner,
   perCarton,
   issues = [],
+  preparedBy = "",
+  checkedBy = "",
 }: {
   doc: any;
   grid: any[];
@@ -19,12 +21,14 @@ export default function PdfDownloadButtons({
   perInner: any;
   perCarton: any;
   issues?: any[];
+  preparedBy?: string;
+  checkedBy?: string;
 }) {
   return (
     <>
       <PDFDownloadLink
         document={
-          <WeightSheetPdf doc={doc} grid={grid} items={items} perPcs={perPcs} perInner={perInner} perCarton={perCarton} issues={issues} />
+          <WeightSheetPdf doc={doc} grid={grid} items={items} perPcs={perPcs} perInner={perInner} perCarton={perCarton} issues={issues} preparedBy={preparedBy} checkedBy={checkedBy} />
         }
         fileName={`${doc.wh_number}-weight.pdf`}
         className="btn-primary"
@@ -38,7 +42,7 @@ export default function PdfDownloadButtons({
       </PDFDownloadLink>
 
       <PDFDownloadLink
-        document={<CountSheetPdf doc={doc} grid={grid} />}
+        document={<CountSheetPdf doc={doc} grid={grid} preparedBy={preparedBy} checkedBy={checkedBy} />}
         fileName={`${doc.wh_number}-count.pdf`}
         className="btn-secondary"
       >

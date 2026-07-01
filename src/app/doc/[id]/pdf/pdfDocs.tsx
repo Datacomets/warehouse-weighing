@@ -70,8 +70,10 @@ const styles = StyleSheet.create({
   td: { flex: 1, padding: 4 },
   sigBox: { flexDirection: "row", marginTop: 30, gap: 30 },
   sig: { flex: 1 },
-  sigLine: { borderBottomWidth: 1, borderBottomColor: "#191c1d", height: 30 },
+  sigSpace: { height: 26 },
+  sigLine: { borderBottomWidth: 1, borderBottomColor: "#191c1d" },
   sigLabel: { textAlign: "center", marginTop: 4, color: "#767684" },
+  sigName: { textAlign: "center", fontSize: 9, fontWeight: 700, marginBottom: 1 },
   small2: { fontSize: 9, marginBottom: 2 },
   catLabel: { fontSize: 9, fontWeight: 700 },
   metaPill: {
@@ -98,7 +100,29 @@ const styles = StyleSheet.create({
     marginRight: 4,
     marginBottom: 4,
   },
+  chipSeq: { color: "#767684", fontWeight: 400 },
+  rtable: { borderTopWidth: 0.5, borderLeftWidth: 0.5, borderColor: "#c6c5d5", marginTop: 3 },
+  rtr: { flexDirection: "row" },
+  rcell: {
+    flex: 1,
+    fontSize: 8,
+    borderRightWidth: 0.5,
+    borderBottomWidth: 0.5,
+    borderColor: "#c6c5d5",
+    paddingHorizontal: 3,
+    paddingVertical: 2,
+  },
+  rseqCell: { flex: 0.42, color: "#767684", textAlign: "center", backgroundColor: "#f4f4f6" },
+  rHead: { backgroundColor: "#edeeef", fontWeight: 700, textAlign: "center", color: "#191c1d" },
 });
+
+const READING_COLS = 5;
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
 
 function CategoryBlock({
   label,
@@ -144,11 +168,32 @@ function CategoryBlock({
             AVG {fmt(data.avg)} · MIN {fmt(data.min)} · MAX {fmt(data.max)} · {data.count} ครั้ง ({unit})
           </Text>
           {extra ? <Text style={styles.extraLine}>{extra}</Text> : null}
-          <View style={styles.chipWrap}>
-            {values.map((v, i) => (
-              <Text key={i} style={styles.chip}>
-                {fmt(v)}
-              </Text>
+          <View style={styles.rtable}>
+            <View style={styles.rtr}>
+              {Array.from({ length: READING_COLS }).flatMap((_, c) => [
+                <Text key={`hs${c}`} style={[styles.rcell, styles.rHead, { flex: 0.42 }]}>
+                  {noClip("ลำดับ")}
+                </Text>,
+                <Text key={`hv${c}`} style={[styles.rcell, styles.rHead]}>
+                  {noClip("น้ำหนักที่ชั่ง")}
+                </Text>,
+              ])}
+            </View>
+            {chunk(values, READING_COLS).map((row, r) => (
+              <View style={styles.rtr} key={r}>
+                {Array.from({ length: READING_COLS }).flatMap((_, c) => {
+                  const idx = r * READING_COLS + c;
+                  const v = row[c];
+                  return [
+                    <Text key={`s${c}`} style={[styles.rcell, styles.rseqCell]}>
+                      {v != null ? idx + 1 : ""}
+                    </Text>,
+                    <Text key={`v${c}`} style={styles.rcell}>
+                      {v != null ? fmt(v) : ""}
+                    </Text>,
+                  ];
+                })}
+              </View>
             ))}
           </View>
         </>
@@ -157,10 +202,11 @@ function CategoryBlock({
   );
 }
 
-export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, issues }: any) {
+export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, issues, preparedBy, checkedBy }: any) {
   const issueList = Array.isArray(issues) ? issues : [];
   const measurements = Array.isArray(items) ? items : [];
   const unitLabel = weightUnitLabel(doc.weight_unit);
+  const fullCartonCount = Number(doc.actual_count) || 0;
   const perPcsValues = weightValuesByKind(measurements, "per_pcs");
   const perInnerValues = weightValuesByKind(measurements, "per_inner");
   const perCartonValues = gridValuesSorted(Array.isArray(grid) ? grid : []);
@@ -195,10 +241,13 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           <Cell label="Description" value={noClip(softBreak(doc.description))} />
           <Cell label="Lot Number" value={doc.lot_number} />
           <Cell label="Delivery Date" value={fmtDate(doc.delivery_date)} />
-          <Cell label="Scale" value={doc.scale_name} />
+          <Cell label="Weighing Machine Number" value={doc.scale_name} />
           <Cell label="Qty / Carton" value={String(doc.qty_per_carton ?? "-")} />
-          <Cell label="Full Cartons" value={String(doc.actual_count ?? "-")} />
-          <Cell label="Remainder (pcs)" value={String(doc.remainder_pcs ?? "0")} />
+          <Cell label="Full carton" value={String(doc.actual_count ?? "-")} />
+          <Cell label="Loose pieces" value={String(doc.remainder_pcs ?? "0")} />
+          {fullCartonCount > 0 && remainderPcs > 0 ? (
+            <Cell label="Partial carton" value="1" />
+          ) : null}
           <Cell label="Unit" value={doc.weight_unit || "kg"} />
           <Cell label="MFG" value={fmtDate(doc.mfg_date)} />
           <Cell label="EXP" value={fmtDate(doc.exp_date)} />
@@ -274,22 +323,33 @@ export function WeightSheetPdf({ doc, grid, items, perPcs, perInner, perCarton, 
           <Text style={styles.small2}>หมายเหตุ: {doc.remarks ? noClip(doc.remarks) : "-"}</Text>
         </View>
 
-        <View style={styles.sigBox}>
-          <View style={styles.sig}>
-            <View style={styles.sigLine} />
-            <Text style={styles.sigLabel}>(ผู้จัดทำ)</Text>
-          </View>
-          <View style={styles.sig}>
-            <View style={styles.sigLine} />
-            <Text style={styles.sigLabel}>(ผู้ตรวจสอบ)</Text>
-          </View>
-        </View>
+        <SigBox preparedBy={preparedBy} checkedBy={checkedBy} />
       </Page>
     </Document>
   );
 }
 
-export function CountSheetPdf({ doc, grid }: any) {
+function SigBox({ preparedBy, checkedBy }: { preparedBy?: string; checkedBy?: string }) {
+  return (
+    <View style={styles.sigBox}>
+      <SigCol name={preparedBy} role="(ผู้จัดทำ)" />
+      <SigCol name={checkedBy} role="(ผู้ตรวจสอบ)" />
+    </View>
+  );
+}
+
+function SigCol({ name, role }: { name?: string; role: string }) {
+  return (
+    <View style={styles.sig}>
+      <View style={styles.sigSpace} />
+      {name ? <Text style={styles.sigName}>{noClip(name)}</Text> : null}
+      <View style={styles.sigLine} />
+      <Text style={styles.sigLabel}>{noClip(role)}</Text>
+    </View>
+  );
+}
+
+export function CountSheetPdf({ doc, grid, preparedBy, checkedBy }: any) {
   const rows = reorganizeGridToRows(grid);
   const { avg, min, max, count } = countGridStats(grid);
 
@@ -351,16 +411,7 @@ export function CountSheetPdf({ doc, grid }: any) {
           </View>
         </View>
 
-        <View style={styles.sigBox}>
-          <View style={styles.sig}>
-            <View style={styles.sigLine} />
-            <Text style={styles.sigLabel}>(ผู้จัดทำ)</Text>
-          </View>
-          <View style={styles.sig}>
-            <View style={styles.sigLine} />
-            <Text style={styles.sigLabel}>(ผู้ตรวจสอบ)</Text>
-          </View>
-        </View>
+        <SigBox preparedBy={preparedBy} checkedBy={checkedBy} />
       </Page>
     </Document>
   );

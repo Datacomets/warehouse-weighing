@@ -39,11 +39,15 @@ export function PdfClient({
   items,
   grid,
   issues = [],
+  preparedBy = "",
+  checkedBy = "",
 }: {
   doc: any;
   items: any[];
   grid: any[];
   issues?: any[];
+  preparedBy?: string;
+  checkedBy?: string;
 }) {
   const perPcs = weightStatsByKind(items, "per_pcs");
   const perInner = weightStatsByKind(items, "per_inner");
@@ -85,10 +89,13 @@ export function PdfClient({
           <Row label="Description" value={doc.description} />
           <Row label="Lot Number" value={doc.lot_number} />
           <Row label="Delivery" value={fmtDate(doc.delivery_date)} />
-          <Row label="Scale" value={doc.scale_name} />
+          <Row label="Weighing Machine Number" value={doc.scale_name} />
           <Row label="Qty/Carton" value={doc.qty_per_carton} />
-          <Row label="ลังเต็ม" value={cartonCount} />
-          <Row label="เศษ (ชิ้น)" value={remainderPcs || "-"} />
+          <Row label="Full carton" value={cartonCount} />
+          <Row label="Loose pieces" value={remainderPcs || "-"} />
+          {cartonCount > 0 && remainderPcs > 0 ? (
+            <Row label="Partial carton" value={1} />
+          ) : null}
           <Row label="รวมชิ้น" value={totalPcs.toLocaleString()} />
           <Row label="หน่วยวัด" value={unitLabel} />
           <Row label="MFG" value={fmtDate(doc.mfg_date)} />
@@ -170,8 +177,8 @@ export function PdfClient({
         </div>
 
         <div className="grid grid-cols-2 gap-6 mt-8">
-          <Sig label="ผู้จัดทำ" />
-          <Sig label="ผู้ตรวจสอบ" />
+          <Sig label="ผู้จัดทำ" name={preparedBy} />
+          <Sig label="ผู้ตรวจสอบ" name={checkedBy} />
         </div>
       </div>
 
@@ -184,6 +191,8 @@ export function PdfClient({
           perInner={perInner}
           perCarton={perCarton}
           issues={issues}
+          preparedBy={preparedBy}
+          checkedBy={checkedBy}
         />
 
         <button onClick={() => window.print()} className="btn-secondary">
@@ -234,16 +243,44 @@ function CategoryBlock({
             AVG {fmt(data.avg)} · MIN {fmt(data.min)} · MAX {fmt(data.max)} · {data.count} ครั้ง ({unit})
           </p>
           {extra && <p className="text-tertiary-fixed-dim">{extra}</p>}
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {values.map((v, i) => (
-              <span
-                key={i}
-                className="inline-flex items-baseline bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 py-1"
-              >
-                <span className="font-semibold text-primary">{fmt(v)}</span>
-              </span>
-            ))}
-          </div>
+          <table className="w-full border-l border-t border-outline-variant/50 mt-1">
+            <thead className="bg-surface-container">
+              <tr>
+                {Array.from({ length: 5 }).flatMap((_, c) => [
+                  <th key={`hs${c}`} className="border-r border-b border-outline-variant/50 px-1 py-1 text-center font-semibold w-[6%]">
+                    ลำดับ
+                  </th>,
+                  <th key={`hv${c}`} className="border-r border-b border-outline-variant/50 px-1.5 py-1 text-center font-semibold w-[14%]">
+                    น้ำหนักที่ชั่ง
+                  </th>,
+                ])}
+              </tr>
+            </thead>
+            <tbody>
+              {chunkArr(values, 5).map((row, r) => (
+                <tr key={r}>
+                  {Array.from({ length: 5 }).flatMap((_, c) => {
+                    const idx = r * 5 + c;
+                    const v = row[c];
+                    return [
+                      <td
+                        key={`s${c}`}
+                        className="border-r border-b border-outline-variant/50 px-1 py-1 text-center text-outline bg-surface-container-low w-[6%]"
+                      >
+                        {v != null ? idx + 1 : ""}
+                      </td>,
+                      <td
+                        key={`v${c}`}
+                        className="border-r border-b border-outline-variant/50 px-1.5 py-1 font-semibold text-primary w-[14%]"
+                      >
+                        {v != null ? fmt(v) : ""}
+                      </td>,
+                    ];
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </>
       )}
     </div>
@@ -259,11 +296,19 @@ function Row({ label, value, className }: { label: string; value: any; className
   );
 }
 
-function Sig({ label }: { label: string }) {
+function chunkArr<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+function Sig({ label, name }: { label: string; name?: string }) {
   return (
     <div className="text-xs">
-      <div className="border-b border-outline mb-1 h-12" />
-      <p className="text-center text-outline">({label})</p>
+      <div className="h-10" />
+      {name && <p className="text-center font-semibold mb-0.5 truncate">{name}</p>}
+      <div className="border-b border-outline" />
+      <p className="text-center text-outline mt-1">({label})</p>
     </div>
   );
 }
