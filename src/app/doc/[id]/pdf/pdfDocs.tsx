@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   sigSpace: { height: 26 },
   sigLine: { borderBottomWidth: 1, borderBottomColor: "#191c1d" },
   sigLabel: { textAlign: "center", marginTop: 4, color: "#767684" },
-  sigName: { textAlign: "center", fontSize: 9, fontWeight: 700, marginBottom: 1 },
+  sigName: { textAlign: "center", fontSize: 9, fontWeight: 700, marginTop: 1 },
   small2: { fontSize: 9, marginBottom: 2 },
   catLabel: { fontSize: 9, fontWeight: 700 },
   metaPill: {
@@ -342,9 +342,9 @@ function SigCol({ name, role }: { name?: string; role: string }) {
   return (
     <View style={styles.sig}>
       <View style={styles.sigSpace} />
-      {name ? <Text style={styles.sigName}>{noClip(name)}</Text> : null}
       <View style={styles.sigLine} />
       <Text style={styles.sigLabel}>{noClip(role)}</Text>
+      {name ? <Text style={styles.sigName}>{`(${name})`}</Text> : null}
     </View>
   );
 }

@@ -306,9 +306,9 @@ function Sig({ label, name }: { label: string; name?: string }) {
   return (
     <div className="text-xs">
       <div className="h-10" />
-      {name && <p className="text-center font-semibold mb-0.5 truncate">{name}</p>}
       <div className="border-b border-outline" />
       <p className="text-center text-outline mt-1">({label})</p>
+      {name && <p className="text-center font-semibold truncate">({name})</p>}
     </div>
   );
 }
