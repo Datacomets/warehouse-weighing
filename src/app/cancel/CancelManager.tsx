@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { fmtDateTime } from "@/lib/stats";
 import type { DocStatus } from "@/lib/types";
 import {
@@ -38,7 +39,7 @@ export interface CancelDoc {
   cancel_note: string | null;
 }
 
-type Step = "select" | "reason" | "confirm" | "result";
+type Step = "select" | "reason" | "result";
 type Tab = "active" | "cancelled";
 
 export function CancelManager({
@@ -65,13 +66,13 @@ export function CancelManager({
   const [mode, setMode] = useState<"same" | "each">("same");
   const [same, setSame] = useState<{ reason: CancelReason | ""; dupWh: string; note: string }>({ reason: "", dupWh: "", note: "" });
   const [each, setEach] = useState<Record<string, { reason: CancelReason | ""; dupWh: string; note: string }>>({});
-  const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [results, setResults] = useState<CancelResult[] | null>(null);
   const [resultKind, setResultKind] = useState<"cancel" | "restore" | "undo">("cancel");
   const [whExists, setWhExists] = useState<Record<string, boolean>>({});
   const checking = useRef(new Set<string>());
+  const { confirm, DialogElement } = useConfirm();
 
   const list = tab === "active" ? active : cancelled;
   const filtered = useMemo(() => {
@@ -131,13 +132,21 @@ export function CancelManager({
     setSelected(new Set());
     setSame({ reason: "", dupWh: "", note: "" });
     setEach({});
-    setTyped("");
     setResults(null);
     setErr(null);
     router.refresh();
   }
 
   async function doCancel() {
+    const n = chosen.length;
+    const ok = await confirm({
+      title: `ยืนยันยกเลิกใบงาน ${n} ใบ?`,
+      message: `${chosen.map((d) => d.wh_number).join(", ")} — ใบงานจะหายจากรายการของทุกคน (ข้อมูลยังเก็บไว้ กู้คืนได้)`,
+      confirmLabel: "ยืนยันยกเลิก",
+      cancelLabel: "ไม่ยกเลิก",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     setErr(null);
     const res = await cancelDocuments(supabase, items);
@@ -199,68 +208,12 @@ export function CancelManager({
     );
   }
 
-  // ───────────────────────── step: confirm ─────────────────────────
-  if (step === "confirm") {
-    const n = chosen.length;
-    return (
-      <div className="flex flex-col gap-3">
-        <Steps at={2} />
-        <div className="card">
-          <span className="section-title">สรุปรายการที่จะยกเลิก ({n} ใบ)</span>
-          <div className="flex flex-col divide-y divide-surface-container-high mt-1">
-            {items.map((i) => {
-              const d = chosen.find((x) => x.id === i.id)!;
-              return (
-                <div key={i.id} className="py-2 flex items-start justify-between gap-2">
-                  <div>
-                    <b className="text-sm">{d.wh_number}</b>
-                    <p className="text-[11px] text-outline">{d.item_code} · PO {d.po_number || "-"}</p>
-                    <p className="text-[11px] text-error">{cancelReasonText(i.reason, normalizeWh(i.dupWh), i.note)}</p>
-                  </div>
-                  <StatusBadge status={d.status} />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="card border border-error-container bg-[#fff8f7]">
-          <p className="text-xs">
-            พิมพ์จำนวนใบงาน <b>{n}</b> เพื่อยืนยัน
-          </p>
-          <input
-            inputMode="numeric"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            className="input-base mt-2"
-            placeholder={String(n)}
-          />
-          {typed && (typed.trim() === String(n) ? (
-            <p className="text-[11px] font-bold text-green-700 mt-1">✓ ตรงกัน</p>
-          ) : (
-            <p className="text-[11px] font-bold text-error mt-1">✕ จำนวนไม่ตรง</p>
-          ))}
-        </div>
-        {err && <p className="text-xs text-error">{err}</p>}
-        <button
-          type="button"
-          disabled={busy || typed.trim() !== String(n)}
-          onClick={doCancel}
-          className="w-full rounded-xl py-3 font-bold text-white bg-error disabled:opacity-40 flex items-center justify-center gap-2"
-        >
-          <Icon name="block" /> {busy ? "กำลังยกเลิก..." : `ยืนยันยกเลิก ${n} ใบ`}
-        </button>
-        <button type="button" onClick={() => setStep("reason")} className="btn-secondary w-full">
-          <Icon name="arrow_back" /> ย้อนกลับ
-        </button>
-      </div>
-    );
-  }
-
   // ───────────────────────── step: reason ─────────────────────────
   if (step === "reason") {
     return (
       <div className="flex flex-col gap-3">
-        <Steps at={1} />
+        {DialogElement}
+        <p className="text-[11px] text-outline">เลือกเหตุผล แล้วกดปุ่มยกเลิกด้านล่าง ({chosen.length} ใบ)</p>
         {chosen.length > 1 && (
           <div className="card flex flex-col gap-2">
             <ModeOption on={mode === "same"} onClick={() => setMode("same")} title="ใช้เหตุผลเดียวกันทุกใบ" hint={`ใช้กับทั้ง ${chosen.length} ใบที่เลือก`} />
@@ -294,8 +247,14 @@ export function CancelManager({
           ))
         )}
         <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-background via-background to-transparent px-4 py-4 z-30 flex flex-col gap-2">
-          <button type="button" disabled={!allValid} onClick={() => { setTyped(""); setStep("confirm"); }} className="btn-primary w-full disabled:opacity-40">
-            ถัดไป <Icon name="arrow_forward" />
+          {err && <p className="text-xs text-error">{err}</p>}
+          <button
+            type="button"
+            disabled={!allValid || busy}
+            onClick={doCancel}
+            className="w-full rounded-xl py-3 font-bold text-white bg-error disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            <Icon name="block" /> {busy ? "กำลังยกเลิก..." : `ยกเลิกใบงาน ${chosen.length} ใบ`}
           </button>
           <button type="button" onClick={() => setStep("select")} className="text-sm text-outline py-1">
             ← กลับไปเลือกใบงาน
@@ -308,6 +267,7 @@ export function CancelManager({
   // ───────────────────────── step: select ─────────────────────────
   return (
     <div className="flex flex-col gap-3">
+      {DialogElement}
       <div className="flex gap-2">
         <TabBtn on={tab === "active"} onClick={() => switchTab("active")}>ยกเลิกได้ ({active.length})</TabBtn>
         <TabBtn on={tab === "cancelled"} onClick={() => switchTab("cancelled")}>ยกเลิกแล้ว ({cancelled.length})</TabBtn>
@@ -374,8 +334,14 @@ export function CancelManager({
           <button
             type="button"
             disabled={selected.size === 0 || busy}
-            onClick={() => {
-              if (window.confirm(`กู้คืนใบงาน ${selected.size} ใบ ให้กลับมาแสดงตามปกติ?`)) doRestore(Array.from(selected), "restore");
+            onClick={async () => {
+              const ok = await confirm({
+                title: `กู้คืนใบงาน ${selected.size} ใบ?`,
+                message: "ใบงานจะกลับมาแสดงตามปกติสำหรับทุกคน",
+                confirmLabel: "กู้คืน",
+                cancelLabel: "ไม่กู้คืน",
+              });
+              if (ok) doRestore(Array.from(selected), "restore");
             }}
             className="btn-primary w-full disabled:opacity-40"
           >
@@ -383,18 +349,6 @@ export function CancelManager({
           </button>
         )}
       </div>
-    </div>
-  );
-}
-
-function Steps({ at }: { at: 1 | 2 }) {
-  return (
-    <div>
-      <div className="flex gap-1.5">
-        <span className="flex-1 h-1.5 rounded-full bg-primary-container" />
-        <span className={clsx("flex-1 h-1.5 rounded-full", at === 2 ? "bg-primary-container" : "bg-surface-container-high")} />
-      </div>
-      <p className="text-[11px] text-outline mt-1">ขั้นที่ {at}/2 · {at === 1 ? "เลือกเหตุผล" : "ตรวจสรุปและยืนยัน"}</p>
     </div>
   );
 }
