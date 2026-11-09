@@ -23,6 +23,8 @@ const ACTION_LABEL: Record<string, string> = {
   unlock: "ปลดล็อกเพื่อแก้ไข",
   reopen_completed: "เปิดเอกสารใหม่ (post-SAP)",
   recall_submission: "ถอนส่งงาน",
+  cancel_doc: "ยกเลิกใบงาน",
+  restore_doc: "กู้คืนใบงาน",
 };
 
 /** Thai labels for header field keys recorded in audit_log detail.fields. */

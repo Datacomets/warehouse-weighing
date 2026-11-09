@@ -55,6 +55,12 @@ export interface GrDocument {
   ended_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Soft-cancel (migration 0009) — null = active document. */
+  cancelled_at?: string | null;
+  cancelled_by?: string | null;
+  cancel_reason?: string | null;
+  cancel_dup_wh?: string | null;
+  cancel_note?: string | null;
 }
 
 export interface WeightMeasurement {

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { HomeFilters } from "./HomeFilters";
 import { logger } from "@/lib/logger";
 import { seesOnlyOwnDocuments } from "@/lib/permissions";
+import { isDocCanceler } from "@/lib/cancelDocs";
 import {
   parseHomeTab,
   normalizeSearchQuery,
@@ -42,7 +43,7 @@ export default async function HomePage({
   if (orExpr) {
     query = query.or(orExpr);
   }
-  const { data: docs, error } = await query;
+  const [{ data: docs, error }, canceler] = await Promise.all([query, isDocCanceler(supabase, profile.id)]);
   if (error) logger.error("Home page query error", { error: error.message });
 
   const inProgress = (docs || []).filter((d: any) => d.status === "in_progress").length;
@@ -63,6 +64,14 @@ export default async function HomePage({
       />
       <main className="mt-16 pb-32 px-4 flex flex-col gap-4">
         <HomeFilters defaultQ={q} defaultTab={tab} />
+        {canceler && (
+          <Link
+            href="/cancel"
+            className="self-end inline-flex items-center gap-1 text-xs font-bold text-error border border-error rounded-full px-3 py-1.5"
+          >
+            <Icon name="block" className="text-base" /> ยกเลิกใบงาน (เลือกหลายใบ)
+          </Link>
+        )}
 
         <section className="grid grid-cols-2 gap-3">
           <Stat

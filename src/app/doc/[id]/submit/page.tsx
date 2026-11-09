@@ -203,12 +203,16 @@ export default async function SubmitPage({ params }: { params: { id: string } })
         <Icon name="picture_as_pdf" /> ดูตัวอย่าง / Export PDF
       </Link>
 
-      <SubmitPanel
-        docId={params.id}
-        canSubmit={hasAll}
-        status={doc.status}
-        canRecall={doc.status === "pending_sap" && doc.submitted_by === profile?.id}
-      />
+      {doc.cancelled_at ? (
+        <div className="card text-sm text-on-surface-variant">ใบงานนี้ถูกยกเลิกแล้ว — ส่งงานไม่ได้</div>
+      ) : (
+        <SubmitPanel
+          docId={params.id}
+          canSubmit={hasAll}
+          status={doc.status}
+          canRecall={doc.status === "pending_sap" && doc.submitted_by === profile?.id}
+        />
+      )}
     </div>
   );
 }

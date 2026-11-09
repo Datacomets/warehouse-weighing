@@ -14,7 +14,7 @@ export default async function HeaderPage({ params }: { params: { id: string } })
   const readOnly =
     !profile || !doc
       ? true
-      : !canEditDocumentData(profile.role, doc.status);
+      : !(canEditDocumentData(profile.role, doc.status) && !doc.cancelled_at);
 
   return <HeaderForm doc={doc} userId={profile?.id} readOnly={readOnly} />;
 }

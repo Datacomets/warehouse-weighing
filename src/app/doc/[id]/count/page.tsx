@@ -19,7 +19,7 @@ export default async function CountPage({ params }: { params: { id: string } }) 
     .select("*")
     .eq("document_id", params.id);
 
-  const readOnly = !profile || !canEditDocumentData(profile.role, doc.status);
+  const readOnly = !profile || !(canEditDocumentData(profile.role, doc.status) && !doc.cancelled_at);
   const skipped = !!doc.skip_per_carton;
 
   return (

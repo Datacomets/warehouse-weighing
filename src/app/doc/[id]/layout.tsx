@@ -4,6 +4,9 @@ import { TopAppBar } from "@/components/TopAppBar";
 import { StepNav } from "./StepNav";
 import { StatusBadge } from "@/components/StatusBadge";
 import { canEditDocumentData } from "@/lib/workflow";
+import Link from "next/link";
+import { isDocCanceler, isCancelableStatus, cancelReasonText } from "@/lib/cancelDocs";
+import { fmtDateTime } from "@/lib/stats";
 
 export default async function DocLayout({
   params,
@@ -47,7 +50,14 @@ export default async function DocLayout({
     submit: doc.status === "pending_sap" || doc.status === "completed",
   };
 
-  const readOnly = !canEditDocumentData(profile.role, doc.status);
+  const isCancelled = !!doc.cancelled_at;
+  const canceler = await isDocCanceler(supabase, profile.id);
+  let cancelledByName: string | null = null;
+  if (isCancelled && doc.cancelled_by) {
+    const { data: cb } = await supabase.from("profiles").select("full_name").eq("id", doc.cancelled_by).maybeSingle();
+    cancelledByName = cb?.full_name ?? null;
+  }
+  const readOnly = !canEditDocumentData(profile.role, doc.status) || isCancelled;
   const isAdminEditingCompleted =
     doc.status === "completed" && canEditDocumentData(profile.role, doc.status);
 
@@ -61,7 +71,20 @@ export default async function DocLayout({
       />
       <main className="mt-16 pb-32 px-4">
         <StepNav docId={doc.id} completed={completed} />
-        {readOnly && (
+        {isCancelled && (
+          <div className="bg-surface-container-high border-l-4 border-outline text-on-surface-variant text-xs px-3 py-2 rounded-lg mb-3">
+            <b>ใบงานนี้ถูกยกเลิก</b> โดย {cancelledByName || "-"} · {fmtDateTime(doc.cancelled_at)}
+            <br />
+            เหตุผล: {cancelReasonText(doc.cancel_reason, doc.cancel_dup_wh, doc.cancel_note)}
+            {canceler && (
+              <>
+                {" · "}
+                <Link href="/cancel?tab=cancelled" className="underline font-bold">กู้คืนใบงาน</Link>
+              </>
+            )}
+          </div>
+        )}
+        {readOnly && !isCancelled && (
           <div className="bg-secondary-container/60 border border-outline-variant/30 text-on-secondary-container text-xs px-3 py-2 rounded-lg mb-3">
             เอกสารนี้ถูกล็อก (Status: {doc.status}). ขอให้ Admin "ปลดล็อก" หากต้องการแก้ไข
           </div>
@@ -72,6 +95,20 @@ export default async function DocLayout({
           </div>
         )}
         {children}
+        {canceler && !isCancelled && isCancelableStatus(doc.status) && (
+          <div className="card mt-6 border border-error-container bg-[#fff8f7]">
+            <p className="text-sm font-bold text-error">⚠ โซนอันตราย</p>
+            <p className="text-[11px] text-outline mt-0.5">
+              ยกเลิกได้เฉพาะใบงานที่ยังไม่นำเข้า SAP · ข้อมูลยังเก็บไว้และกู้คืนได้
+            </p>
+            <Link
+              href={`/cancel?ids=${doc.id}`}
+              className="mt-2 w-full rounded-xl py-2.5 font-bold text-error border-2 border-error flex items-center justify-center gap-2 text-sm"
+            >
+              ยกเลิกใบงานนี้ →
+            </Link>
+          </div>
+        )}
       </main>
     </>
   );

@@ -19,7 +19,7 @@ export default async function RemainderPage({ params }: { params: { id: string }
     .select("*", { count: "exact", head: true })
     .eq("document_id", params.id);
 
-  const readOnly = !profile || !canEditDocumentData(profile.role, doc.status);
+  const readOnly = !profile || !(canEditDocumentData(profile.role, doc.status) && !doc.cancelled_at);
 
   return (
     <div className="flex flex-col gap-5">

@@ -8,7 +8,7 @@ export default async function IssuesPage({ params }: { params: { id: string } })
   const { profile } = await getCurrentUserAndProfile();
   const { data: doc } = await supabase
     .from("gr_documents")
-    .select("id,status")
+    .select("*")
     .eq("id", params.id)
     .single();
   const { data: issues } = await supabase
@@ -20,7 +20,7 @@ export default async function IssuesPage({ params }: { params: { id: string } })
   const readOnly =
     !profile || !doc
       ? true
-      : !canEditDocumentData(profile.role, doc.status);
+      : !(canEditDocumentData(profile.role, doc.status) && !doc.cancelled_at);
 
   return (
     <div className="flex flex-col gap-5">

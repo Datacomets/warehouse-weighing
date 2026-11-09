@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
+import { ItemPhotoCard } from "./ItemPhotoCard";
 import type { UserRole } from "@/lib/types";
 
 export function CreateDocForm({
@@ -21,6 +22,8 @@ export function CreateDocForm({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
+  // item code confirmed to exist in item_master — drives the product photo card
+  const [foundCode, setFoundCode] = useState<string | null>(null);
   const [form, setForm] = useState({
     lot: "",
     po_number: "",
@@ -36,6 +39,7 @@ export function CreateDocForm({
     const trimmed = code.trim();
     if (!trimmed) {
       setLookupMsg(null);
+      setFoundCode(null);
       return;
     }
     const { data, error } = await supabase
@@ -44,11 +48,13 @@ export function CreateDocForm({
       .eq("item_code", trimmed)
       .maybeSingle();
     if (error) {
+      setFoundCode(null);
       setLookupMsg("ค้นหา Item Code ไม่สำเร็จ");
       return;
     }
     if (data?.description) {
       setForm((f) => ({ ...f, description: data.description }));
+      setFoundCode(trimmed);
       const cat = data.product_category ? ` · ${data.product_category}` : "";
       if (data.obsolete) {
         setLookupMsg(`⚠ Item นี้ถูกยกเลิก (Obsolete)${cat}`);
@@ -56,6 +62,7 @@ export function CreateDocForm({
         setLookupMsg(`พบใน Item Master — กรอก Description ให้แล้ว${cat}`);
       }
     } else {
+      setFoundCode(null);
       setLookupMsg("ไม่พบ Item Code นี้ใน Master — กรุณากรอก Description เอง");
     }
   }
@@ -131,6 +138,7 @@ export function CreateDocForm({
             onChange={(e) => {
               setForm({ ...form, item_code: e.target.value });
               setLookupMsg(null);
+              setFoundCode(null);
             }}
             onBlur={(e) => lookupItemCode(e.target.value)}
             className="input-base"
@@ -150,6 +158,11 @@ export function CreateDocForm({
             className="input-base"
           />
         </Field>
+        {foundCode && (
+          <div className="col-span-2">
+            <ItemPhotoCard itemCode={foundCode} />
+          </div>
+        )}
         <Field label="ชื่อสินค้าฝั่ง Supplier" hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้" className="col-span-2">
           <input
             value={form.supplier}

@@ -12,7 +12,7 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
   const { profile } = await getCurrentUserAndProfile();
   const { data: doc } = await supabase
     .from("gr_documents")
-    .select("id,status,weight_unit,skip_per_inner,skip_reason_per_inner")
+    .select("*")
     .eq("id", params.id)
     .single();
   if (!doc) notFound();
@@ -28,7 +28,7 @@ export default async function PerInnerPage({ params }: { params: { id: string } 
     .eq("document_id", params.id)
     .eq("kind", "per_inner");
 
-  const readOnly = !profile || !canEditDocumentData(profile.role, doc.status);
+  const readOnly = !profile || !(canEditDocumentData(profile.role, doc.status) && !doc.cancelled_at);
   const skipped = !!doc.skip_per_inner;
 
   return (
