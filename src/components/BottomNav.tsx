@@ -1,12 +1,37 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icon";
 import { clsx } from "clsx";
 import type { UserRole } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
+
+/** Cached per page load — whether the signed-in user may open /logs (log_viewers). */
+let logViewerCache: Promise<boolean> | null = null;
+function checkLogViewer(): Promise<boolean> {
+  if (!logViewerCache) {
+    const supabase = createClient();
+    logViewerCache = supabase.auth.getSession().then(async ({ data }) => {
+      const uid = data.session?.user.id;
+      if (!uid) return false;
+      const { data: row, error } = await supabase.from("log_viewers").select("user_id").eq("user_id", uid).maybeSingle();
+      return !error && !!row;
+    });
+  }
+  return logViewerCache;
+}
 
 export function BottomNav({ role }: { role: UserRole }) {
   const path = usePathname();
+  const [canLog, setCanLog] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    checkLogViewer().then((ok) => alive && setCanLog(ok));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   let items: { href: string; icon: string; label: string }[] = [];
   if (role === "operator") {
@@ -40,10 +65,10 @@ export function BottomNav({ role }: { role: UserRole }) {
       { href: "/users", icon: "group", label: "ผู้ใช้" },
       { href: "/team", icon: "groups", label: "ทีม" },
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
-      { href: "/logs", icon: "history", label: "Log" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
   }
+  if (canLog) items.splice(items.length - 1, 0, { href: "/logs", icon: "history", label: "Log" });
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-40 flex justify-around items-center h-20 pb-safe bg-white/90 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,60,0.05)] rounded-t-xl no-print">

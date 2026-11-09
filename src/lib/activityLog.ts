@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 /**
  * Thai labels + formatting for the admin activity log (/logs).
  * Sources: audit_log (semantic events written by the app / RPCs) and
@@ -171,4 +173,10 @@ export function eventDetail(action: string, detail: Record<string, unknown> | nu
     if (d["value"] !== undefined && d["value"] !== null) parts.push(`→ ${d["value"]}`);
   }
   return parts.join(" · ");
+}
+
+/** Only users listed in log_viewers (initially TEAMDATA) may open /logs. */
+export async function isLogViewer(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  const { data, error } = await supabase.from("log_viewers").select("user_id").eq("user_id", userId).maybeSingle();
+  return !error && !!data; // table missing (SQL 0010 not run) → hidden
 }

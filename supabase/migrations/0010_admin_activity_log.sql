@@ -1,17 +1,38 @@
 -- ===========================================================
--- 0010 — Admin เห็นทั้งหมด + เก็บประวัติการทำงานทั้งหมด
+-- 0010 — Log การใช้งาน (เฉพาะ TEAMDATA) + เก็บประวัติการทำงานทั้งหมด
 --
--- 1) admin (เช่น TEAMDATA) เห็นใบงานที่ถูกยกเลิกได้ (ดูอย่างเดียว)
+-- 0) log_viewers: ผู้มีสิทธิ์ดู Log — เริ่มต้น TEAMDATA คนเดียว
+--    (แก้ได้ผ่าน SQL / service role เท่านั้น)
+-- 1) ผู้ดู Log เห็นใบงานที่ถูกยกเลิกได้ (ดูอย่างเดียว)
 --    — หน้ารายการ/Dashboard/Export ในแอปยังกรองใบที่ยกเลิกออกเหมือนเดิม
 -- 2) activity_log: trigger บันทึก "ทุก" การเพิ่ม/แก้/ลบ ข้อมูลอัตโนมัติ
---    (ใคร · เมื่อไร · ตารางไหน · ค่าเดิม → ค่าใหม่) — admin อ่านได้คนเดียว
+--    (ใคร · เมื่อไร · ตารางไหน · ค่าเดิม → ค่าใหม่) — อ่านได้เฉพาะผู้ดู Log
 -- 3) audit_log / activity_log: แก้ไขหรือลบประวัติไม่ได้ (เดิมใครก็ลบได้)
 -- 4) admin_login_history(): ประวัติการเข้าสู่ระบบ (สำหรับหน้า Log)
 --
 -- รันครั้งเดียวใน Supabase → SQL Editor (รันซ้ำได้ ไม่เสียหาย)
 -- ===========================================================
 
--- 1) admin เห็นใบที่ยกเลิก -----------------------------------------
+-- 0) ผู้มีสิทธิ์ดู Log ------------------------------------------------
+create table if not exists log_viewers (
+  user_id    uuid primary key references profiles(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table log_viewers enable row level security;
+drop policy if exists "log_viewers self read" on log_viewers;
+create policy "log_viewers self read" on log_viewers for select using (user_id = auth.uid());
+-- ไม่มี policy insert/update/delete → แก้ได้เฉพาะ SQL / service role
+
+insert into log_viewers (user_id)
+select id from auth.users where email = 'teamdata@comets.local'
+on conflict do nothing;
+
+create or replace function can_view_logs() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from log_viewers where user_id = auth.uid())
+$$;
+
+-- 1) ผู้ดู Log เห็นใบที่ยกเลิก ---------------------------------------
 drop policy if exists "gr read by role" on gr_documents;
 create policy "gr read by role" on gr_documents for select using (
   (
@@ -21,7 +42,7 @@ create policy "gr read by role" on gr_documents for select using (
       or created_by = auth.uid()
     )
   )
-  or (cancelled_at is not null and (can_cancel_docs() or current_role_name() = 'admin'))
+  or (cancelled_at is not null and (can_cancel_docs() or can_view_logs()))
 );
 
 -- 2) activity_log -------------------------------------------------
@@ -43,7 +64,8 @@ create index if not exists activity_log_actor_idx on activity_log (actor);
 
 alter table activity_log enable row level security;
 drop policy if exists "activity admin read" on activity_log;
-create policy "activity admin read" on activity_log for select using (current_role_name() = 'admin');
+drop policy if exists "activity viewer read" on activity_log;
+create policy "activity viewer read" on activity_log for select using (can_view_logs());
 -- ไม่มี policy insert/update/delete → เขียนได้จาก trigger เท่านั้น แก้/ลบไม่ได้
 
 create or replace function log_activity() returns trigger
@@ -110,13 +132,13 @@ create policy "audit insert" on audit_log for insert
   with check (auth.role() = 'authenticated' and (actor is null or actor = auth.uid()));
 -- ไม่มี policy update/delete → ประวัติที่บันทึกแล้วแก้หรือลบไม่ได้
 
--- 4) ประวัติการเข้าสู่ระบบ (admin เท่านั้น) ------------------------
+-- 4) ประวัติการเข้าสู่ระบบ (ผู้ดู Log เท่านั้น) ---------------------
 create or replace function admin_login_history(p_from timestamptz, p_to timestamptz)
 returns table (at timestamptz, user_id uuid, email text, ip text)
 language plpgsql stable security definer set search_path = public, auth as $$
 begin
-  if current_role_name() is distinct from 'admin' then
-    raise exception 'เฉพาะผู้ดูแลระบบ';
+  if not can_view_logs() then
+    raise exception 'ไม่มีสิทธิ์ดู Log';
   end if;
   return query
     select e.created_at,

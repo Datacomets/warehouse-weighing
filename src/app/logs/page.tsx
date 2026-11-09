@@ -7,7 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Icon } from "@/components/Icon";
 import { fmtDateTime } from "@/lib/stats";
 import { cancelReasonText } from "@/lib/cancelDocs";
-import { EVENT_LABEL, activityTitle, activityDetails, eventDetail } from "@/lib/activityLog";
+import { EVENT_LABEL, activityTitle, activityDetails, eventDetail, isLogViewer } from "@/lib/activityLog";
 import { LogExportButton, type LogExportRow } from "./LogExportButton";
 
 type Tab = "events" | "changes" | "logins" | "cancelled";
@@ -35,7 +35,6 @@ export default async function LogsPage({
 }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
-  if (profile.role !== "admin") redirect("/home");
 
   const tab: Tab = (TABS.find((t) => t.key === searchParams.tab)?.key ?? "events") as Tab;
   const today = thDate(new Date());
@@ -47,6 +46,7 @@ export default async function LogsPage({
   const q = (searchParams.q || "").trim().toUpperCase();
 
   const supabase = createClient();
+  if (!(await isLogViewer(supabase, profile.id))) redirect("/home");
   const { data: people } = await supabase.from("profiles").select("id,full_name,role").order("full_name");
   const nameOf = (id: string | null | undefined) => (id ? people?.find((p) => p.id === id)?.full_name || "ผู้ใช้ที่ถูกลบ" : "ระบบ");
 
@@ -168,7 +168,7 @@ export default async function LogsPage({
 
   return (
     <>
-      <TopAppBar title="Log การใช้งาน" subtitle="ประวัติการทำงานทั้งหมด (admin)" />
+      <TopAppBar title="Log การใช้งาน" subtitle="ประวัติการทำงานทั้งหมด" />
       <main className="mt-16 pb-32 px-4 flex flex-col gap-3">
         <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4">
           {TABS.map((t) => (
