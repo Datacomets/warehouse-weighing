@@ -64,6 +64,7 @@ export default async function LogsPage({
     let query = supabase
       .from("audit_log")
       .select("id,action,detail,actor,created_at,document_id")
+      .neq("action", "login")
       .gte("created_at", fromISO)
       .lt("created_at", toISO)
       .order("created_at", { ascending: false })
@@ -114,18 +115,30 @@ export default async function LogsPage({
       };
     });
   } else if (tab === "logins") {
-    const { data, error } = await supabase.rpc("admin_login_history", { p_from: fromISO, p_to: toISO });
-    if (error) note = /admin_login_history/.test(error.message) ? "ยังไม่ได้รัน SQL 0010 — ยังดูประวัติการเข้าสู่ระบบไม่ได้" : error.message;
-    rows = ((data || []) as { at: string; user_id: string | null; email: string; ip: string | null }[])
-      .filter((r) => !user || r.user_id === user)
-      .map((r, i) => ({
-        key: "l" + i,
-        at: r.at,
-        who: r.user_id ? nameOf(r.user_id) : r.email,
+    let query = supabase
+      .from("audit_log")
+      .select("id,actor,created_at,detail")
+      .eq("action", "login")
+      .gte("created_at", fromISO)
+      .lt("created_at", toISO)
+      .order("created_at", { ascending: false })
+      .limit(LIMIT);
+    if (user) query = query.eq("actor", user);
+    const { data, error } = await query;
+    if (error) note = error.message;
+    rows = (data || []).map((r) => {
+      const d = (r.detail || {}) as { emp_code?: string; ua?: string };
+      const ua = d.ua || "";
+      const device = /iPhone|iPad/.test(ua) ? "iPhone/iPad" : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows" : /Mac/.test(ua) ? "Mac" : "";
+      return {
+        key: "l" + r.id,
+        at: r.created_at,
+        who: nameOf(r.actor),
         title: "เข้าสู่ระบบ",
-        lines: [`รหัส ${String(r.email || "").replace("@comets.local", "").toUpperCase()}`, r.ip ? `IP ${r.ip}` : ""].filter(Boolean),
-      }));
-    if (!error && rows.length === 0) note = note || "ไม่พบประวัติการเข้าสู่ระบบในช่วงวันที่นี้";
+        lines: [d.emp_code ? `รหัส ${d.emp_code}` : "", device ? `อุปกรณ์ ${device}` : ""].filter(Boolean),
+      };
+    });
+    if (!error && rows.length === 0) note = "ยังไม่มีประวัติการเข้าสู่ระบบในช่วงวันที่นี้ (เริ่มบันทึกตั้งแต่ 9 พ.ย. 2569)";
   } else {
     let query = supabase
       .from("gr_documents")

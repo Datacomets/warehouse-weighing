@@ -33,7 +33,7 @@ function LoginInner() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: signIn, error } = await supabase.auth.signInWithPassword({
       email: empCodeToEmail(normalized),
       password,
     });
@@ -41,6 +41,18 @@ function LoginInner() {
     if (error) {
       setErr(translateSupabaseError(error));
       return;
+    }
+    // login history for the Log page — never block sign-in if this fails
+    if (signIn?.user) {
+      await supabase
+        .from("audit_log")
+        .insert({
+          document_id: null,
+          actor: signIn.user.id,
+          action: "login",
+          detail: { emp_code: normalized, ua: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 160) : null },
+        })
+        .then(() => undefined, () => undefined);
     }
     const target = search.get("from") || "/";
     router.push(target);

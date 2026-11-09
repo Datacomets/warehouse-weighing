@@ -19,6 +19,7 @@ export const EVENT_LABEL: Record<string, string> = {
   cancel_doc: "ยกเลิกใบงาน",
   restore_doc: "กู้คืนใบงาน",
   add_item_photo: "เพิ่มรูปสินค้า",
+  login: "เข้าสู่ระบบ",
 };
 
 export const TABLE_LABEL: Record<string, string> = {
