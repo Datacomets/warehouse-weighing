@@ -103,6 +103,7 @@ export function ExportFab({ role }: { role: UserRole }) {
         supabase
           .from("gr_documents")
           .select("*")
+          .is("cancelled_at", null)
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id,full_name"),
         supabase.from("weight_measurements").select("document_id,kind,value"),

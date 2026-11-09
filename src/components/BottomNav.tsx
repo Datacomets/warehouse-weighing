@@ -40,6 +40,7 @@ export function BottomNav({ role }: { role: UserRole }) {
       { href: "/users", icon: "group", label: "ผู้ใช้" },
       { href: "/team", icon: "groups", label: "ทีม" },
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+      { href: "/logs", icon: "history", label: "Log" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
   }

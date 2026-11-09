@@ -29,7 +29,7 @@ export default async function HomePage({
   const onlyMine = seesOnlyOwnDocuments(profile.role);
 
   const supabase = createClient();
-  let query = supabase.from("gr_documents").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("gr_documents").select("*").is("cancelled_at", null).order("created_at", { ascending: false });
 
   if (onlyMine) {
     query = query.eq("created_by", profile.id);

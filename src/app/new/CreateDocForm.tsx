@@ -160,7 +160,7 @@ export function CreateDocForm({
         </Field>
         {foundCode && (
           <div className="col-span-2">
-            <ItemPhotoCard itemCode={foundCode} />
+            <ItemPhotoCard itemCode={foundCode} userId={userId} />
           </div>
         )}
         <Field label="ชื่อสินค้าฝั่ง Supplier" hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้" className="col-span-2">

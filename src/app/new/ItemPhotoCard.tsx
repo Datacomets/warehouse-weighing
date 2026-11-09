@@ -10,7 +10,7 @@ import { findItemPhoto, uploadItemPhoto } from "@/lib/itemPhoto";
  * - item has no photo → offer to take one / pick from the gallery (optional)
  * Only rendered for item codes that exist in item_master.
  */
-export function ItemPhotoCard({ itemCode }: { itemCode: string }) {
+export function ItemPhotoCard({ itemCode, userId }: { itemCode: string; userId: string }) {
   const supabase = createClient();
   const [state, setState] = useState<"loading" | "none" | "has" | "added">("loading");
   const [url, setUrl] = useState<string | null>(null);
@@ -46,6 +46,13 @@ export function ItemPhotoCard({ itemCode }: { itemCode: string }) {
     }
     setUrl(res.url);
     setState("added");
+    // history for the admin Log page (no document yet → document_id null)
+    await supabase.from("audit_log").insert({
+      document_id: null,
+      actor: userId,
+      action: "add_item_photo",
+      detail: { item_code: itemCode, url: res.url },
+    });
   }
 
   if (state === "loading") {

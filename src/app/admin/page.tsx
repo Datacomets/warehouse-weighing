@@ -45,16 +45,19 @@ export default async function AdminPage({
     supabase
       .from("gr_documents")
       .select("*")
+      .is("cancelled_at", null)
       .eq("status", "pending_sap")
       .order("submitted_at", { ascending: false }),
     supabase
       .from("gr_documents")
       .select("*")
+      .is("cancelled_at", null)
       .eq("status", "in_progress")
       .order("created_at", { ascending: false }),
     supabase
       .from("gr_documents")
       .select("*")
+      .is("cancelled_at", null)
       .eq("status", "completed")
       .gte("closed_at", startISO)
       .lt("closed_at", endISO)
@@ -63,6 +66,7 @@ export default async function AdminPage({
       ? supabase
           .from("gr_documents")
           .select("*")
+          .is("cancelled_at", null)
           .order("created_at", { ascending: false })
           .limit(200)
       : Promise.resolve({ data: [] as any[], error: null }),

@@ -42,6 +42,7 @@ export default async function TeamUserPage({
   let query = supabase
     .from("gr_documents")
     .select("*")
+    .is("cancelled_at", null)
     .eq("created_by", params.userId)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -56,6 +57,7 @@ export default async function TeamUserPage({
   const { data: allForCount } = await supabase
     .from("gr_documents")
     .select("status,closed_at")
+    .is("cancelled_at", null)
     .eq("created_by", params.userId);
 
   const startOfDay = startOfDayTH();

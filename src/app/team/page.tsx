@@ -25,6 +25,7 @@ export default async function TeamPage() {
     supabase
       .from("gr_documents")
       .select("id,status,created_by,closed_at")
+      .is("cancelled_at", null)
       .in("status", ["in_progress", "pending_sap", "completed"]),
   ]);
 

@@ -24,6 +24,7 @@ export default async function DashboardPage() {
   const { data: docs, error: docsErr } = await supabase
     .from("gr_documents")
     .select("*")
+    .is("cancelled_at", null)
     .order("created_at", { ascending: false })
     .limit(200);
 

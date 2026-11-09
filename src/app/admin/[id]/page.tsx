@@ -10,6 +10,7 @@ import { UnlockButton } from "./UnlockButton";
 import { ISSUE_TYPES } from "@/lib/mock-erp";
 import { canAccessAdminQueue } from "@/lib/permissions";
 import { canEditDocumentData } from "@/lib/workflow";
+import { cancelReasonText } from "@/lib/cancelDocs";
 import { clsx } from "clsx";
 
 /** Human-readable Thai labels for audit_log action codes. */
@@ -25,6 +26,7 @@ const ACTION_LABEL: Record<string, string> = {
   recall_submission: "ถอนส่งงาน",
   cancel_doc: "ยกเลิกใบงาน",
   restore_doc: "กู้คืนใบงาน",
+  add_item_photo: "เพิ่มรูปสินค้า",
 };
 
 /** Thai labels for header field keys recorded in audit_log detail.fields. */
@@ -75,6 +77,7 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
   if (doc.created_by) userIds.add(doc.created_by);
   if (doc.submitted_by) userIds.add(doc.submitted_by);
   if (doc.closed_by) userIds.add(doc.closed_by);
+  if (doc.cancelled_by) userIds.add(doc.cancelled_by);
   for (const entry of auditLog || []) {
     if (entry.actor) userIds.add(entry.actor);
   }
@@ -115,6 +118,15 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
     <>
       <TopAppBar title={doc.wh_number} subtitle="Admin SAP Entry" showBack rightSlot={<StatusBadge status={doc.status} />} />
       <main className="mt-16 pb-32 px-4 flex flex-col gap-4">
+        {doc.cancelled_at && (
+          <div className="bg-surface-container-high border-l-4 border-error text-on-surface-variant text-xs px-3 py-2 rounded-lg">
+            <b className="text-error">ใบงานนี้ถูกยกเลิก</b> โดย {userLabel(doc.cancelled_by)} · {fmtDateTime(doc.cancelled_at)}
+            <br />
+            เหตุผล: {cancelReasonText(doc.cancel_reason, doc.cancel_dup_wh, doc.cancel_note)}
+            <br />
+            ใบนี้ไม่แสดงในรายการงาน รายงาน และ Export — ดูได้จากหน้า Log (ดูอย่างเดียว)
+          </div>
+        )}
 
         {/* ข้อมูลเอกสาร */}
         <div className="card border-l-4 border-primary-container">
@@ -311,10 +323,10 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
           <Link href={`/doc/${doc.id}/pdf`} className="btn-secondary flex-1">
             <Icon name="picture_as_pdf" /> Export PDF
           </Link>
-          {doc.status === "pending_sap" && <UnlockButton docId={doc.id} />}
+          {doc.status === "pending_sap" && !doc.cancelled_at && <UnlockButton docId={doc.id} />}
         </div>
 
-        {doc.status === "pending_sap" && <SapEntryForm doc={doc} userId={profile.id} />}
+        {doc.status === "pending_sap" && !doc.cancelled_at && <SapEntryForm doc={doc} userId={profile.id} />}
         {doc.status === "completed" && (
           <>
             <div className="card border-l-4 border-success">
