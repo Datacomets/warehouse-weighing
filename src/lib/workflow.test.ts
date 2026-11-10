@@ -117,3 +117,9 @@ describe("workflow invariants", () => {
     }
   });
 });
+
+describe("canEditDocumentData() — admin_wh", () => {
+  it.each(["in_progress", "pending_sap", "completed"] as const)("matches manager for %s", (status) => {
+    expect(canEditDocumentData("admin_wh", status)).toBe(canEditDocumentData("manager", status));
+  });
+});

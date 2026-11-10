@@ -82,9 +82,12 @@ export interface CancelResult {
 }
 
 export async function isDocCanceler(supabase: SupabaseClient, userId: string): Promise<boolean> {
-  const { data, error } = await supabase.from("doc_cancelers").select("user_id").eq("user_id", userId).maybeSingle();
-  // table missing (migration not run yet) → feature simply stays hidden
-  return !error && !!data;
+  // can_cancel_docs() = role admin_wh OR listed in doc_cancelers (migrations 0009/0011)
+  const { data, error } = await supabase.rpc("can_cancel_docs");
+  if (!error) return data === true;
+  // fallback (older database): per-user list only
+  const { data: row, error: e2 } = await supabase.from("doc_cancelers").select("user_id").eq("user_id", userId).maybeSingle();
+  return !e2 && !!row;
 }
 
 export async function cancelDocuments(

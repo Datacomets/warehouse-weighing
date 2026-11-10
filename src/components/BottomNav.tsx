@@ -53,7 +53,7 @@ export function BottomNav({ role }: { role: UserRole }) {
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
-  } else if (role === "manager") {
+  } else if (role === "manager" || role === "admin_wh") {
     items = [
       { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
       { href: "/team", icon: "groups", label: "ทีม" },

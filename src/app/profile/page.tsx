@@ -8,6 +8,7 @@ const ROLE_LABEL: Record<string, string> = {
   operator: "พนักงานปฏิบัติการ",
   qc: "QC / หัวหน้างาน",
   admin_sap: "Admin SAP",
+  admin_wh: "Admin WH",
   manager: "ผู้จัดการ",
   admin: "Admin (System)",
 };

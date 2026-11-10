@@ -34,7 +34,7 @@ export function canUnlock(status: DocStatus): boolean {
  * Can the given role edit weight / grid / header / issue data on a doc
  * given its current status?
  *
- * - admin / admin_sap / manager: in_progress (normal) OR completed (late
+ * - admin / admin_sap / admin_wh / manager: in_progress (normal) OR completed (late
  *   corrections in place — no status change, doc stays closed). For
  *   pending_sap they must still use Unlock first to bounce it back to
  *   the operator.
@@ -42,7 +42,7 @@ export function canUnlock(status: DocStatus): boolean {
  *   submit locks them out until admin unlocks)
  */
 export function canEditDocumentData(role: UserRole, status: DocStatus): boolean {
-  if (role === "admin" || role === "admin_sap" || role === "manager") {
+  if (role === "admin" || role === "admin_sap" || role === "admin_wh" || role === "manager") {
     return status === "in_progress" || status === "completed";
   }
   return status === "in_progress";

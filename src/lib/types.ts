@@ -1,7 +1,7 @@
 // Auto-generatable types — kept manual & minimal for now.
 // You can replace with output of `supabase gen types typescript` later.
 
-export type UserRole = "operator" | "qc" | "manager" | "admin_sap" | "admin";
+export type UserRole = "operator" | "qc" | "manager" | "admin_sap" | "admin_wh" | "admin";
 export type DocStatus = "in_progress" | "pending_sap" | "completed";
 export type WeightKind = "per_pcs" | "per_inner" | "per_carton";
 

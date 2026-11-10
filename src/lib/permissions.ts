@@ -6,10 +6,10 @@ import type { UserRole } from "./types";
  */
 
 export const ADMIN_QUEUE_ROLES: readonly UserRole[] = ["admin_sap", "admin", "qc"];
-export const TEAM_ROLES: readonly UserRole[] = ["qc", "manager", "admin"];
+export const TEAM_ROLES: readonly UserRole[] = ["qc", "manager", "admin_wh", "admin"];
 export const ITEM_MASTER_ROLES: readonly UserRole[] = ["admin", "admin_sap"];
-export const DASHBOARD_ROLES: readonly UserRole[] = ["qc", "manager", "admin_sap", "admin"];
-export const EXPORT_REPORT_ROLES: readonly UserRole[] = ["admin", "admin_sap", "manager"];
+export const DASHBOARD_ROLES: readonly UserRole[] = ["qc", "manager", "admin_wh", "admin_sap", "admin"];
+export const EXPORT_REPORT_ROLES: readonly UserRole[] = ["admin", "admin_sap", "admin_wh", "manager"];
 
 export function canAccessAdminQueue(role: UserRole): boolean {
   return ADMIN_QUEUE_ROLES.includes(role);
@@ -46,6 +46,7 @@ export function homeRouteFor(role: UserRole): string {
     case "admin_sap":
       return "/admin";
     case "manager":
+    case "admin_wh":
       return "/dashboard";
     case "admin":
       return "/users";

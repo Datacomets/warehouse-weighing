@@ -10,6 +10,7 @@ const ROLES: { value: UserRole; label: string }[] = [
   { value: "operator", label: "พนักงาน" },
   { value: "qc", label: "QC / หัวหน้างาน" },
   { value: "admin_sap", label: "Admin SAP" },
+  { value: "admin_wh", label: "Admin WH" },
   { value: "manager", label: "ผู้จัดการ" },
   { value: "admin", label: "Admin (System)" },
 ];

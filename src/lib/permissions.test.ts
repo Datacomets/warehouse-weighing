@@ -11,7 +11,7 @@ import {
   homeRouteFor,
 } from "./permissions";
 
-const ALL_ROLES: UserRole[] = ["operator", "qc", "manager", "admin_sap", "admin"];
+const ALL_ROLES: UserRole[] = ["operator", "qc", "manager", "admin_sap", "admin_wh", "admin"];
 
 describe("canAccessAdminQueue()", () => {
   it.each(["admin_sap", "admin", "qc"] as const)("allows %s", (role) => {
@@ -95,5 +95,15 @@ describe("homeRouteFor()", () => {
     for (const role of ALL_ROLES) {
       expect(homeRouteFor(role)).toMatch(/^\/[a-z]+$/);
     }
+  });
+});
+
+describe("admin_wh (AdminWH) — same access as manager", () => {
+  const fns = [canAccessAdminQueue, canAccessTeam, canAccessItemMaster, canAccessDashboard, canManageUsers, canExportReport, seesOnlyOwnDocuments];
+  it.each(fns.map((f) => [f.name, f] as const))("%s matches manager", (_name, fn) => {
+    expect(fn("admin_wh")).toBe(fn("manager"));
+  });
+  it("lands on the dashboard like a manager", () => {
+    expect(homeRouteFor("admin_wh")).toBe("/dashboard");
   });
 });
