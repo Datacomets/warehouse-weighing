@@ -97,7 +97,7 @@ export default async function DocLayout({
         {children}
         {canceler && !isCancelled && isCancelableStatus(doc.status) && (
           <div className="card mt-6 border border-error-container bg-[#fff8f7]">
-            <p className="text-sm font-bold text-error">⚠ โซนอันตราย</p>
+            <p className="text-sm font-bold text-error">ยกเลิกใบงานนี้</p>
             <p className="text-[11px] text-outline mt-0.5">
               ยกเลิกได้เฉพาะใบงานที่ยังไม่นำเข้า SAP · ข้อมูลยังเก็บไว้และกู้คืนได้
             </p>
@@ -105,7 +105,7 @@ export default async function DocLayout({
               href={`/cancel?ids=${doc.id}`}
               className="mt-2 w-full rounded-xl py-2.5 font-bold text-error border-2 border-error flex items-center justify-center gap-2 text-sm"
             >
-              ยกเลิกใบงานนี้ →
+              เลือกเหตุผลและยกเลิก →
             </Link>
           </div>
         )}
