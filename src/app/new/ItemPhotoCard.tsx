@@ -10,7 +10,16 @@ import { findItemPhoto, uploadItemPhoto } from "@/lib/itemPhoto";
  * - item has no photo → offer to take one / pick from the gallery (optional)
  * Only rendered for item codes that exist in item_master.
  */
-export function ItemPhotoCard({ itemCode, userId }: { itemCode: string; userId: string }) {
+export function ItemPhotoCard({
+  itemCode,
+  userId,
+  inMaster = true,
+}: {
+  itemCode: string;
+  userId: string;
+  /** false = code not found in item_master; the photo is still saved under the typed code */
+  inMaster?: boolean;
+}) {
   const supabase = createClient();
   const [state, setState] = useState<"loading" | "none" | "has" | "added">("loading");
   const [url, setUrl] = useState<string | null>(null);
@@ -93,6 +102,9 @@ export function ItemPhotoCard({ itemCode, userId }: { itemCode: string; userId: 
         </div>
         <div className="flex-1">
           <p className="text-sm font-bold">สินค้านี้ยังไม่มีรูป</p>
+          {!inMaster && (
+            <p className="text-[11px] font-bold text-on-tertiary-container">รหัส {itemCode} ยังไม่มีใน Master — ตรวจรหัสให้ถูกก่อนถ่าย รูปจะผูกกับรหัสนี้</p>
+          )}
           <p className="text-[11px] text-outline">ช่วยถ่ายรูปไว้ ให้คนต่อไปเช็กสินค้าได้ง่ายขึ้น (ไม่บังคับ)</p>
         </div>
       </div>

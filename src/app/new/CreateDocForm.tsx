@@ -22,8 +22,10 @@ export function CreateDocForm({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
-  // item code confirmed to exist in item_master — drives the product photo card
+  // item code that was looked up — drives the product photo card
+  // (shown whether or not the code exists in item_master)
   const [foundCode, setFoundCode] = useState<string | null>(null);
+  const [inMaster, setInMaster] = useState(true);
   const [form, setForm] = useState({
     lot: "",
     po_number: "",
@@ -55,6 +57,7 @@ export function CreateDocForm({
     if (data?.description) {
       setForm((f) => ({ ...f, description: data.description }));
       setFoundCode(trimmed);
+      setInMaster(true);
       const cat = data.product_category ? ` · ${data.product_category}` : "";
       if (data.obsolete) {
         setLookupMsg(`⚠ Item นี้ถูกยกเลิก (Obsolete)${cat}`);
@@ -62,7 +65,8 @@ export function CreateDocForm({
         setLookupMsg(`พบใน Item Master — กรอก Description ให้แล้ว${cat}`);
       }
     } else {
-      setFoundCode(null);
+      setFoundCode(trimmed);
+      setInMaster(false);
       setLookupMsg("ไม่พบ Item Code นี้ใน Master — กรุณากรอก Description เอง");
     }
   }
@@ -160,7 +164,7 @@ export function CreateDocForm({
         </Field>
         {foundCode && (
           <div className="col-span-2">
-            <ItemPhotoCard itemCode={foundCode} userId={userId} />
+            <ItemPhotoCard itemCode={foundCode} userId={userId} inMaster={inMaster} />
           </div>
         )}
         <Field label="ชื่อสินค้าฝั่ง Supplier" hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้" className="col-span-2">
