@@ -38,10 +38,14 @@ export function HomeFilters({
   return (
     <>
       <form onSubmit={onSearch} className="relative">
-        <Icon
-          name="search"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-outline"
-        />
+        <button
+          type="submit"
+          aria-label="ค้นหา"
+          title="ค้นหา"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center text-outline hover:bg-surface-container-high hover:text-primary active:scale-95 transition"
+        >
+          <Icon name="search" />
+        </button>
         <input
           name="q"
           type="search"
