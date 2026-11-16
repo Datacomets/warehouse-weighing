@@ -74,8 +74,7 @@ export function ItemPhotoCard({
         <span className="section-title">รูปสินค้าในระบบ</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt={`รูปสินค้า ${itemCode}`} className="w-full max-h-64 object-contain rounded-lg mt-2 bg-surface-container-low" />
-        <p className="text-sm font-bold text-center mt-2">สินค้าที่รับตรงกับรูปนี้ไหม?</p>
-        <p className="text-[11px] text-outline text-center">ถ้าไม่ตรง ให้ตรวจ Item Code อีกครั้ง</p>
+        <p className="text-[11px] text-outline text-center mt-2">ถ้าไม่ตรง ให้ตรวจ Item Code อีกครั้ง</p>
       </div>
     );
   }
