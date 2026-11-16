@@ -26,6 +26,14 @@ export function HomeFilters({
     else sp.delete("q");
     router.push(`/home?${sp.toString()}`);
   }
+  /** Emptying the box (typing it away or the native ✕) goes straight back to the normal list. */
+  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.value.trim() === "" && params.get("q")) {
+      const sp = new URLSearchParams(params);
+      sp.delete("q");
+      router.push(`/home?${sp.toString()}`);
+    }
+  }
 
   return (
     <>
@@ -36,7 +44,9 @@ export function HomeFilters({
         />
         <input
           name="q"
+          type="search"
           defaultValue={defaultQ}
+          onChange={onChange}
           className="input-base h-14 pl-12"
           placeholder="ค้นหา WH-, LOT, PO, Item Code, Description..."
         />

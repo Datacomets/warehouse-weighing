@@ -35,7 +35,10 @@ export default async function HomePage({
   if (onlyMine) {
     query = query.eq("created_by", profile.id);
   }
-  if (tab === "completed") {
+  // While searching, list every status together so matching documents are never hidden behind the other tab.
+  if (q) {
+    // no status filter
+  } else if (tab === "completed") {
     query = query.eq("status", "completed");
   } else {
     query = query.in("status", ["in_progress", "pending_sap"]);
@@ -109,11 +112,16 @@ export default async function HomePage({
         </section>
 
         <div className="flex flex-col gap-4 mt-2">
+          {q && (
+            <p className="text-xs text-outline -mb-2">
+              ผลค้นหา &ldquo;{q}&rdquo; ทุกสถานะ ({(docs || []).length} ใบ) — กดที่ใบงานเพื่อดูรายละเอียด
+            </p>
+          )}
           {(docs || []).length === 0 && (
             <div className="card text-center text-outline py-12 flex flex-col items-center gap-3">
               <Icon name="folder_open" className="text-4xl" />
-              <p className="text-sm">ยังไม่มีเอกสารในหมวดนี้</p>
-              {tab !== "completed" && (
+              <p className="text-sm">{q ? "ไม่พบใบงานที่ตรงกับคำค้นหา" : "ยังไม่มีเอกสารในหมวดนี้"}</p>
+              {!q && tab !== "completed" && (
                 <Link
                   href="/new"
                   className="btn-filled inline-flex items-center gap-2 mt-2"

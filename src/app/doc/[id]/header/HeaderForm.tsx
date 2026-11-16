@@ -8,6 +8,7 @@ import { Toast, useToast } from "@/components/Toast";
 import { validateHeader } from "@/lib/validation";
 import { translateSupabaseError } from "@/lib/supabaseError";
 import { clsx } from "clsx";
+import { ItemPhotoCard } from "@/app/new/ItemPhotoCard";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -56,6 +57,8 @@ export function HeaderForm({
   };
   const [f, setF] = useState(initial);
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
+  // Item code whose product photo is shown (updated on blur, not every keystroke).
+  const [photoCode, setPhotoCode] = useState<string>((doc.item_code || "").trim());
   const initialRef = useRef(initial);
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -261,6 +264,7 @@ export function HeaderForm({
               setLookupMsg(null);
             }}
             onBlur={async (e) => {
+              setPhotoCode(e.target.value.trim());
               await lookupItemCode(e.target.value);
               autoSave();
             }}
@@ -284,6 +288,11 @@ export function HeaderForm({
             className="input-base"
           />
         </Field>
+        {photoCode && userId && (
+          <div className="col-span-2">
+            <ItemPhotoCard itemCode={photoCode} userId={userId} />
+          </div>
+        )}
         <Field
           label="ชื่อสินค้าฝั่ง Supplier"
           hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้"
