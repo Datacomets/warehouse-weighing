@@ -11,6 +11,7 @@ import { ISSUE_TYPES } from "@/lib/mock-erp";
 import { canAccessAdminQueue } from "@/lib/permissions";
 import { canEditDocumentData } from "@/lib/workflow";
 import { cancelReasonText } from "@/lib/cancelDocs";
+import { findItemPhoto } from "@/lib/itemPhoto";
 import { clsx } from "clsx";
 
 /** Human-readable Thai labels for audit_log action codes. */
@@ -72,6 +73,9 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
   ]);
   if (!doc) notFound();
 
+  // Product photo (newest file under gr-photos/items/{code}) — shown in the info card.
+  const itemPhotoUrl = doc.item_code ? await findItemPhoto(supabase, String(doc.item_code)) : null;
+
   // Resolve user names for the workflow card + audit timeline.
   const userIds = new Set<string>();
   if (doc.created_by) userIds.add(doc.created_by);
@@ -131,7 +135,26 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
         {/* ข้อมูลเอกสาร */}
         <div className="card border-l-4 border-primary-container">
           <span className="section-title">ข้อมูลที่ต้องกรอกเข้า SAP</span>
-          <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+          <div className="flex flex-col sm:flex-row gap-3 mt-2">
+          <div className="flex-none sm:order-2 sm:w-48">
+            {itemPhotoUrl ? (
+              <a href={itemPhotoUrl} target="_blank" rel="noopener noreferrer" title="เปิดรูปขนาดเต็ม">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={itemPhotoUrl}
+                  alt={`รูปสินค้า ${doc.item_code}`}
+                  className="w-full h-40 sm:h-48 object-contain rounded-lg bg-surface-container-low border border-outline-variant/30"
+                />
+                <span className="block text-[10px] text-outline text-center mt-1">รูปสินค้า · กดเพื่อขยาย</span>
+              </a>
+            ) : (
+              <div className="w-full h-24 sm:h-48 rounded-lg border-2 border-dashed border-outline-variant flex flex-col items-center justify-center gap-1 text-outline">
+                <Icon name="image_not_supported" />
+                <span className="text-[10px]">ยังไม่มีรูปสินค้า</span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1 grid grid-cols-2 gap-2 text-xs content-start">
             <Info label="PO Number" value={doc.po_number} />
             <Info label="Item Code" value={doc.item_code} />
             <Info label="Description" value={doc.description} className="col-span-2" />
@@ -143,6 +166,7 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
             <Info label="หน่วยวัด" value={unitLabel} />
             <Info label="Gross Weight" value={doc.gross_weight ? `${doc.gross_weight} ${unitLabel}` : null} />
             <Info label="Net Weight" value={doc.net_weight ? `${doc.net_weight} ${unitLabel}` : null} />
+          </div>
           </div>
         </div>
 

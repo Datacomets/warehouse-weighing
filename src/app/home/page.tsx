@@ -6,6 +6,7 @@ import { DocumentCard } from "@/components/DocumentCard";
 import { Icon } from "@/components/Icon";
 import Link from "next/link";
 import { HomeFilters } from "./HomeFilters";
+import { ItemPhotoCard } from "@/app/new/ItemPhotoCard";
 import { logger } from "@/lib/logger";
 import { seesOnlyOwnDocuments } from "@/lib/permissions";
 import { isDocCanceler } from "@/lib/cancelDocs";
@@ -43,7 +44,15 @@ export default async function HomePage({
   if (orExpr) {
     query = query.or(orExpr);
   }
-  const [{ data: docs, error }, canceler] = await Promise.all([query, isDocCanceler(supabase, profile.id)]);
+  // If the search text is exactly an item code in item_master, show that product (with photo) above the results.
+  const itemLookup = q
+    ? supabase.from("item_master").select("item_code, description, product_category, obsolete").eq("item_code", q).maybeSingle()
+    : Promise.resolve({ data: null });
+  const [{ data: docs, error }, canceler, { data: item }] = await Promise.all([
+    query,
+    isDocCanceler(supabase, profile.id),
+    itemLookup,
+  ]);
   if (error) logger.error("Home page query error", { error: error.message });
 
   const inProgress = (docs || []).filter((d: any) => d.status === "in_progress").length;
@@ -71,6 +80,19 @@ export default async function HomePage({
           >
             <Icon name="block" className="text-base" /> ยกเลิกใบงาน (เลือกหลายใบ)
           </Link>
+        )}
+
+        {item && (
+          <section className="flex flex-col gap-2">
+            <div className="card border-l-4 border-primary-container">
+              <span className="section-title">สินค้าตามรหัสที่ค้นหา</span>
+              <div className="mt-1 text-sm font-bold text-on-surface">{item.item_code}</div>
+              <div className="text-xs text-on-surface-variant">{item.description || "-"}</div>
+              {item.product_category && <div className="text-[11px] text-outline">{item.product_category}</div>}
+              {item.obsolete && <div className="text-[11px] font-bold text-error">Obsolete</div>}
+            </div>
+            <ItemPhotoCard itemCode={item.item_code} userId={profile.id} />
+          </section>
         )}
 
         <section className="grid grid-cols-2 gap-3">
