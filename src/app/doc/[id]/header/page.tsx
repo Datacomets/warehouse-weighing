@@ -16,5 +16,11 @@ export default async function HeaderPage({ params }: { params: { id: string } })
       ? true
       : !(canEditDocumentData(profile.role, doc.status) && !doc.cancelled_at);
 
-  return <HeaderForm doc={doc} userId={profile?.id} readOnly={readOnly} />;
+  let photoManageAll = !!profile && ["admin", "admin_wh", "manager"].includes(profile.role);
+  if (profile && !photoManageAll) {
+    const { data: lv } = await supabase.from("log_viewers").select("user_id").eq("user_id", profile.id).maybeSingle();
+    photoManageAll = !!lv;
+  }
+
+  return <HeaderForm doc={doc} userId={profile?.id} readOnly={readOnly} photoManageAll={photoManageAll} />;
 }

@@ -68,6 +68,7 @@ export function BottomNav({ role }: { role: UserRole }) {
       { href: "/profile", icon: "person", label: "โปรไฟล์" },
     ];
   }
+  if (role !== "operator") items.splice(items.length - 1, 0, { href: "/report", icon: "summarize", label: "Report" });
   if (canLog) items.splice(items.length - 1, 0, { href: "/logs", icon: "history", label: "Log" });
 
   return (

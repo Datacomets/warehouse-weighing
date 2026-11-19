@@ -3,7 +3,7 @@ import { createClient, getCurrentUserAndProfile } from "@/lib/supabase/server";
 import { TopAppBar } from "@/components/TopAppBar";
 import { CreateDocForm } from "./CreateDocForm";
 
-export default async function NewDocPage() {
+export default async function NewDocPage({ searchParams }: { searchParams: { code?: string } }) {
   const { profile } = await getCurrentUserAndProfile();
   if (!profile) redirect("/login");
 
@@ -22,7 +22,7 @@ export default async function NewDocPage() {
     <>
       <TopAppBar title="สร้างเอกสารใหม่" subtitle="กรอกข้อมูลก่อนเริ่มชั่งน้ำหนัก" showBack />
       <main className="mt-16 pb-32 px-4">
-        <CreateDocForm whNumber={whNumber as string} userId={profile.id} role={profile.role} />
+        <CreateDocForm whNumber={whNumber as string} userId={profile.id} role={profile.role} initialCode={(searchParams.code || "").trim().slice(0, 40)} />
       </main>
     </>
   );

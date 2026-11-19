@@ -4,12 +4,35 @@ import { StatusBadge, statusBorder } from "./StatusBadge";
 import { Icon } from "./Icon";
 import { fmtDate, leadTimeText } from "@/lib/stats";
 import { clsx } from "clsx";
+import type { CardPhoto } from "@/lib/docPhotos";
+import { thumbUrl } from "@/lib/reportPhotos";
 
-export function DocumentCard({ doc, href }: { doc: GrDocument; href?: string }) {
+/**
+ * photo: pass it (even with count 0) to show the ★ thumbnail column; leave it out to keep the
+ * card text-only.
+ */
+export function DocumentCard({ doc, href, photo }: { doc: GrDocument; href?: string; photo?: CardPhoto }) {
   const inner = (
     <div className={clsx("card", statusBorder(doc.status))}>
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex flex-col">
+      <div className="flex justify-between items-start mb-3 gap-3">
+        {photo && (
+          <div className="relative flex-none">
+            {photo.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={thumbUrl(photo.url, 160)} alt="" loading="lazy" className="w-14 h-14 rounded-xl object-cover bg-surface-container-low" />
+            ) : (
+              <span className="w-14 h-14 rounded-xl border-2 border-dashed border-outline-variant/60 flex items-center justify-center text-outline-variant" title="ยังไม่มีรูปสินค้า">
+                <Icon name="image" className="text-xl" />
+              </span>
+            )}
+            {photo.url && (
+              <span className="absolute -top-1 -left-1 w-4 h-4 rounded-full bg-tertiary-fixed-dim text-primary text-[9px] flex items-center justify-center shadow-sm" aria-hidden>
+                ★
+              </span>
+            )}
+          </div>
+        )}
+        <div className="flex flex-col min-w-0 mr-auto">
           <span className="text-[10px] font-bold text-outline-variant uppercase">
             Document No.
           </span>
@@ -29,6 +52,12 @@ export function DocumentCard({ doc, href }: { doc: GrDocument; href?: string }) 
         <div className="flex items-center gap-2 text-outline text-xs">
           <Icon name="calendar_today" className="text-xs" />
           <span>{fmtDate(doc.delivery_date ?? doc.created_at)}</span>
+          {photo && (
+            <span className="inline-flex items-center gap-1 ml-1" title="รูปสินค้าของใบงานนี้">
+              <Icon name="photo_camera" className="text-xs" />
+              {photo.count}/4
+            </span>
+          )}
         </div>
       </div>
       <div className="flex flex-wrap gap-2 items-center justify-between pt-4 border-t border-surface-container-low">

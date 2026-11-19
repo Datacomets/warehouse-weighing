@@ -11,7 +11,6 @@ import { ISSUE_TYPES } from "@/lib/mock-erp";
 import { canAccessAdminQueue } from "@/lib/permissions";
 import { canEditDocumentData } from "@/lib/workflow";
 import { cancelReasonText } from "@/lib/cancelDocs";
-import { findItemPhoto } from "@/lib/itemPhoto";
 import { clsx } from "clsx";
 
 /** Human-readable Thai labels for audit_log action codes. */
@@ -74,7 +73,20 @@ export default async function AdminDocPage({ params }: { params: { id: string } 
   if (!doc) notFound();
 
   // Product photo (newest file under gr-photos/items/{code}) — shown in the info card.
-  const itemPhotoUrl = doc.item_code ? await findItemPhoto(supabase, String(doc.item_code)) : null;
+  // Product photo: this document's primary photo, else the latest photo of the same item code.
+  const { data: ownPhoto } = await supabase
+    .from("doc_item_photos")
+    .select("url")
+    .eq("document_id", doc.id)
+    .order("is_primary", { ascending: false })
+    .order("created_at")
+    .limit(1)
+    .maybeSingle();
+  let itemPhotoUrl: string | null = ownPhoto?.url ?? null;
+  if (!itemPhotoUrl && doc.item_code) {
+    const { data: cover } = await supabase.rpc("item_cover_url", { p_code: String(doc.item_code) });
+    itemPhotoUrl = (cover as string | null) ?? null;
+  }
 
   // Resolve user names for the workflow card + audit timeline.
   const userIds = new Set<string>();

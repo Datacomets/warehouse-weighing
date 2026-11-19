@@ -6,10 +6,10 @@ import { DocumentCard } from "@/components/DocumentCard";
 import { Icon } from "@/components/Icon";
 import Link from "next/link";
 import { HomeFilters } from "./HomeFilters";
-import { ItemPhotoCard } from "@/app/new/ItemPhotoCard";
 import { logger } from "@/lib/logger";
 import { seesOnlyOwnDocuments } from "@/lib/permissions";
 import { isDocCanceler } from "@/lib/cancelDocs";
+import { cardPhotos } from "@/lib/docPhotos";
 import {
   parseHomeTab,
   normalizeSearchQuery,
@@ -57,6 +57,7 @@ export default async function HomePage({
     itemLookup,
   ]);
   if (error) logger.error("Home page query error", { error: error.message });
+  const photos = await cardPhotos(supabase as any, (docs || []).map((d: any) => d.id));
 
   const inProgress = (docs || []).filter((d: any) => d.status === "in_progress").length;
   const completed = (docs || []).filter((d: any) => d.status === "completed").length;
@@ -87,14 +88,13 @@ export default async function HomePage({
 
         {item && (
           <section className="flex flex-col gap-2">
-            <div className="card border-l-4 border-primary-container">
-              <span className="section-title">สินค้าตามรหัสที่ค้นหา</span>
+            <Link href={`/item/${encodeURIComponent(item.item_code)}`} className="card border-l-4 border-primary-container block hover:bg-surface-container-low">
+              <span className="section-title flex justify-between">สินค้าตามรหัสที่ค้นหา <span className="normal-case text-primary">ดูหน้าสินค้า ›</span></span>
               <div className="mt-1 text-sm font-bold text-on-surface">{item.item_code}</div>
               <div className="text-xs text-on-surface-variant">{item.description || "-"}</div>
               {item.product_category && <div className="text-[11px] text-outline">{item.product_category}</div>}
               {item.obsolete && <div className="text-[11px] font-bold text-error">Obsolete</div>}
-            </div>
-            <ItemPhotoCard itemCode={item.item_code} userId={profile.id} />
+            </Link>
           </section>
         )}
 
@@ -133,7 +133,7 @@ export default async function HomePage({
             </div>
           )}
           {(docs || []).map((d: any) => (
-            <DocumentCard key={d.id} doc={d} href={`/doc/${d.id}/header`} />
+            <DocumentCard key={d.id} doc={d} href={`/doc/${d.id}/header`} photo={photos.get(d.id)} />
           ))}
         </div>
       </main>

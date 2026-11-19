@@ -1,20 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field, SectionHeader } from "@/components/Field";
 import { Icon } from "@/components/Icon";
-import { ItemPhotoCard } from "./ItemPhotoCard";
 import type { UserRole } from "@/lib/types";
 
 export function CreateDocForm({
   whNumber,
   userId,
   role,
+  initialCode = "",
 }: {
   whNumber: string;
   userId: string;
   role: UserRole;
+  /** from /new?code=… (product page → "สร้างใบงานใหม่ของรหัสนี้") */
+  initialCode?: string;
 }) {
   const canEnterSap = role !== "operator";
   const router = useRouter();
@@ -29,13 +31,18 @@ export function CreateDocForm({
   const [form, setForm] = useState({
     lot: "",
     po_number: "",
-    item_code: "",
+    item_code: initialCode,
     description: "",
     supplier: "",
     delivery_date: "",
     sap_inbound_id: "",
     sap_notification_id: "",
   });
+
+  useEffect(() => {
+    if (initialCode) lookupItemCode(initialCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function lookupItemCode(code: string) {
     const trimmed = code.trim();
@@ -164,7 +171,7 @@ export function CreateDocForm({
         </Field>
         {foundCode && (
           <div className="col-span-2">
-            <ItemPhotoCard itemCode={foundCode} userId={userId} inMaster={inMaster} />
+            <p className="text-[11px] text-outline">📷 รูปของใบงานนี้ ถ่ายได้หลังสร้างเอกสาร ในหน้าข้อมูลหลัก</p>
           </div>
         )}
         <Field label="ชื่อสินค้าฝั่ง Supplier" hint="ชื่อที่ Supplier ใช้เรียกสินค้านี้" className="col-span-2">
