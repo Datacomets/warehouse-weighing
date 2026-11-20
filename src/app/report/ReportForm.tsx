@@ -547,7 +547,7 @@ export function ReportForm({
             <div className="mt-3 rounded-xl bg-[#fff4e2] text-[#5c3800] text-xs px-3 py-2 flex items-center gap-1.5">
               <Icon name="photo_library" className="text-sm" />
               <span>
-                จะใส่รูปสินค้า <b>{counts.prodPics.toLocaleString()}</b> · รูปปัญหา <b>{counts.issuePics.toLocaleString()}</b>
+                รูปสินค้า <b>{counts.prodPics.toLocaleString()}</b> · รูปปัญหา <b>{counts.issuePics.toLocaleString()}</b>
               </span>
             </div>
           </Drop>
