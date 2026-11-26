@@ -5,12 +5,12 @@ import { BottomNav } from "@/components/BottomNav";
 import { Icon } from "@/components/Icon";
 
 const STEPS = [
-  { icon: "description", title: "1. สร้างเอกสาร", desc: "กรอก LOT, PO Number, Item Code แล้วกด 'เริ่มบันทึก'" },
-  { icon: "edit_note", title: "2. กรอกข้อมูลหลัก (Header)", desc: "กรอกชื่อเครื่องชั่ง, จำนวนชิ้น/ลัง, ขนาดลัง, น้ำหนัก, วัน MFG/EXP" },
+  { icon: "description", title: "1. สร้างเอกสาร", desc: "กรอก LOT, PO Number, Item Code แล้วกด 'เริ่มบันทึก' ระบบจะออกเลข WH ให้ตอนกดบันทึก" },
+  { icon: "edit_note", title: "2. กรอกข้อมูลหลัก (Header)", desc: "ถ่ายรูปสินค้าให้ครบ 4 รูป (บังคับ) แล้วกรอกชื่อเครื่องชั่ง, จำนวนชิ้น/ลัง, ขนาดลัง, น้ำหนัก, วัน MFG/EXP" },
   { icon: "balance", title: "3. ชั่งต่อชิ้น (Per Pcs)", desc: "ชั่งน้ำหนักต่อชิ้น กรอกค่าแล้วกด 'เพิ่ม' ทีละค่า" },
   { icon: "inventory", title: "4. ชั่งต่อถุง/ถาด (Per Inner)", desc: "ชั่งน้ำหนักต่อ Inner/Tray/Bag กรอกจำนวนชิ้นต่อ Inner" },
   { icon: "local_shipping", title: "5. ชั่งต่อลัง (Per Carton)", desc: "กรอกน้ำหนักในตาราง ช่องที่ค่าผิดปกติจะขึ้นกรอบแดง" },
-  { icon: "exposure", title: "6. นับเศษ (Remainder)", desc: "กรอกจำนวนชิ้นที่ไม่ครบลัง ถ้าไม่มีเศษให้เว้นว่าง" },
+  { icon: "exposure", title: "6. นับเศษ (Remainder)", desc: "กรอกจำนวนชิ้นที่ไม่ครบลัง ถ้าไม่มีเศษให้กดปุ่ม 'ไม่มีเศษ' (ห้ามเว้นว่าง ไม่อย่างนั้นจะส่งงานไม่ได้)" },
   { icon: "report_problem", title: "7. รายงานปัญหา (Issues)", desc: "แจ้งสินค้าเสียหาย/ขาดหาย พร้อมถ่ายรูปประกอบ" },
   { icon: "send", title: "8. ส่งงาน (Submit)", desc: "ตรวจ Checklist แล้วกด 'ยืนยันส่ง' เข้าคิว Admin SAP" },
 ];
@@ -53,7 +53,7 @@ export default async function GuidePage() {
             </li>
             <li className="flex items-center gap-2">
               <Icon name="lock" className="text-outline text-lg" />
-              <span>ล็อก = เอกสารถูกส่งแล้ว ต้องให้ Admin ปลดล็อก</span>
+              <span>ล็อก = ยังไปขั้นตอนนั้นไม่ได้ (เช่น รูปสินค้ายังไม่ครบ 4 รูป) หรือเอกสารถูกส่งแล้ว ต้องให้ Admin ปลดล็อก</span>
             </li>
           </ul>
         </div>
