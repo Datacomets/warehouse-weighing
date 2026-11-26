@@ -7,6 +7,7 @@ import { canEditDocumentData } from "@/lib/workflow";
 import Link from "next/link";
 import { isDocCanceler, isCancelableStatus, cancelReasonText } from "@/lib/cancelDocs";
 import { fmtDateTime } from "@/lib/stats";
+import { DOC_PHOTO_MAX } from "@/lib/docPhotos";
 
 export default async function DocLayout({
   params,
@@ -27,7 +28,7 @@ export default async function DocLayout({
   if (!doc) notFound();
 
   // ตรวจว่า step ไหนมีข้อมูลแล้ว
-  const [{ data: weights }, { count: gridCount }] = await Promise.all([
+  const [{ data: weights }, { count: gridCount }, { count: photoCount }] = await Promise.all([
     supabase
       .from("weight_measurements")
       .select("kind")
@@ -36,11 +37,16 @@ export default async function DocLayout({
       .from("count_grid_entries")
       .select("*", { count: "exact", head: true })
       .eq("document_id", params.id),
+    supabase
+      .from("doc_item_photos")
+      .select("*", { count: "exact", head: true })
+      .eq("document_id", params.id),
   ]);
 
   const kinds = new Set((weights || []).map((w: any) => w.kind));
   const completed: Record<string, boolean> = {
-    header: !!(doc.scale_name || doc.qty_per_carton || doc.gross_weight),
+    // header also needs all 4 product photos (บังคับถ่ายรูปสินค้าครบ 4 รูป)
+    header: !!(doc.scale_name || doc.qty_per_carton || doc.gross_weight) && (photoCount || 0) >= DOC_PHOTO_MAX,
     "per-pcs": kinds.has("per_pcs") || !!doc.skip_per_pcs,
     "per-inner": kinds.has("per_inner") || !!doc.skip_per_inner,
     count: (gridCount || 0) > 0 || !!doc.skip_per_carton,
@@ -70,7 +76,11 @@ export default async function DocLayout({
         rightSlot={<StatusBadge status={doc.status} />}
       />
       <main className="mt-16 pb-32 px-4">
-        <StepNav docId={doc.id} completed={completed} />
+        <StepNav
+          docId={doc.id}
+          completed={completed}
+          photosMissing={doc.status === "in_progress" && !doc.cancelled_at && (photoCount || 0) < DOC_PHOTO_MAX}
+        />
         {isCancelled && (
           <div className="bg-surface-container-high border-l-4 border-outline text-on-surface-variant text-xs px-3 py-2 rounded-lg mb-3">
             <b>ใบงานนี้ถูกยกเลิก</b> โดย {cancelledByName || "-"} · {fmtDateTime(doc.cancelled_at)}

@@ -1,4 +1,5 @@
 import type { WeightKind } from "./types";
+import { DOC_PHOTO_MAX } from "./docPhotos";
 
 export interface SubmitChecklistInput {
   measurementKinds: Iterable<WeightKind | string>;
@@ -7,6 +8,8 @@ export interface SubmitChecklistInput {
   skipPerPcs?: boolean;
   skipPerInner?: boolean;
   skipPerCarton?: boolean;
+  /** product photos on the document (รูปสินค้าของใบงานนี้) */
+  photoCount: number;
 }
 
 export interface SubmitChecklist {
@@ -14,6 +17,7 @@ export interface SubmitChecklist {
   hasInner: boolean;
   hasCarton: boolean;
   hasRemainder: boolean;
+  hasPhotos: boolean;
   hasAll: boolean;
 }
 
@@ -24,6 +28,7 @@ export interface SubmitChecklist {
  *   - At least one count_grid_entry (or the tab is explicitly skipped)
  *   - Remainder recorded (non-null; can be 0). Only required if the carton tab
  *     was actually weighed — a skipped carton tab skips remainder too.
+ *   - All DOC_PHOTO_MAX (4) product photos uploaded.
  */
 export function computeSubmitChecklist(input: SubmitChecklistInput): SubmitChecklist {
   const kinds = new Set<string>();
@@ -36,7 +41,8 @@ export function computeSubmitChecklist(input: SubmitChecklistInput): SubmitCheck
   const hasRemainder = !!input.skipPerCarton
     ? true
     : cartonWeighed && input.remainderPcs != null;
-  const hasAll = hasPcs && hasInner && hasCarton && hasRemainder;
+  const hasPhotos = input.photoCount >= DOC_PHOTO_MAX;
+  const hasAll = hasPcs && hasInner && hasCarton && hasRemainder && hasPhotos;
 
-  return { hasPcs, hasInner, hasCarton, hasRemainder, hasAll };
+  return { hasPcs, hasInner, hasCarton, hasRemainder, hasPhotos, hasAll };
 }

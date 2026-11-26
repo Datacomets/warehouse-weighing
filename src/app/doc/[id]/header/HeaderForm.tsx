@@ -9,6 +9,7 @@ import { validateHeader } from "@/lib/validation";
 import { translateSupabaseError } from "@/lib/supabaseError";
 import { clsx } from "clsx";
 import { DocPhotos } from "@/components/DocPhotos";
+import { DOC_PHOTO_MAX } from "@/lib/docPhotos";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -33,6 +34,8 @@ export function HeaderForm({
   const readOnly = readOnlyProp ?? doc.status !== "in_progress";
   const toast = useToast();
   const [saving, setSaving] = useState(false);
+  // product photos on this document — null until DocPhotos has loaded
+  const [photoCount, setPhotoCount] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [dirty, setDirty] = useState(false);
@@ -219,6 +222,8 @@ export function HeaderForm({
   }
 
   const isPostSubmit = doc.status !== "in_progress";
+  // บังคับรูปสินค้าครบ 4 รูปก่อนไปขั้นตอนถัดไป (only while the job is being worked on)
+  const photosMissing = !isPostSubmit && !doc.cancelled_at && (photoCount === null || photoCount < DOC_PHOTO_MAX);
 
   return (
     <form
@@ -290,7 +295,7 @@ export function HeaderForm({
         </Field>
         {userId && (
           <div className="col-span-2">
-            <DocPhotos documentId={doc.id} userId={userId} canManageAll={photoManageAll} readOnly={!!doc.cancelled_at} />
+            <DocPhotos documentId={doc.id} userId={userId} canManageAll={photoManageAll} readOnly={!!doc.cancelled_at} onCountChange={setPhotoCount} />
           </div>
         )}
         <Field
@@ -500,13 +505,15 @@ export function HeaderForm({
           <div className="flex items-center justify-between gap-3 mb-2 text-xs">
             <SaveIndicator status={saveStatus} />
           </div>
-          <button type="submit" disabled={saving} className="btn-primary w-full">
+          <button type="submit" disabled={saving || photosMissing} className="btn-primary w-full">
             {saving
               ? "กำลังบันทึก..."
+              : photosMissing
+              ? `ถ่ายรูปสินค้าให้ครบ ${DOC_PHOTO_MAX} รูปก่อน (${photoCount ?? 0}/${DOC_PHOTO_MAX})`
               : isPostSubmit
               ? "บันทึกและกลับหน้า Admin"
               : "ถัดไป: ชั่ง Per Pcs"}
-            <Icon name={isPostSubmit ? "check_circle" : "arrow_forward"} />
+            <Icon name={photosMissing ? "lock" : isPostSubmit ? "check_circle" : "arrow_forward"} />
           </button>
         </div>
       )}

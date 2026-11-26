@@ -4,6 +4,7 @@ import { SubmitPanel } from "./SubmitPanel";
 import { SectionHeader } from "@/components/Field";
 import { fmt, fmtDateTime, leadTimeText } from "@/lib/stats";
 import { computeSubmitChecklist } from "@/lib/submitChecklist";
+import { DOC_PHOTO_MAX } from "@/lib/docPhotos";
 import {
   weightStatsByKind,
   countGridStats,
@@ -31,6 +32,10 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     .from("count_grid_entries")
     .select("*")
     .eq("document_id", params.id);
+  const { count: photoCount } = await supabase
+    .from("doc_item_photos")
+    .select("*", { count: "exact", head: true })
+    .eq("document_id", params.id);
   const { data: issues } = await supabase
     .from("issue_reports")
     .select("*")
@@ -42,7 +47,8 @@ export default async function SubmitPage({ params }: { params: { id: string } })
   const issueList = issues || [];
   const gridCount = gridEntries.length;
 
-  const { hasPcs, hasInner, hasCarton, hasRemainder, hasAll } = computeSubmitChecklist({
+  const { hasPcs, hasInner, hasCarton, hasRemainder, hasPhotos, hasAll } = computeSubmitChecklist({
+    photoCount: photoCount || 0,
     measurementKinds: measurements.map((i: any) => i.kind),
     gridCount,
     remainderPcs: doc.remainder_pcs,
@@ -92,6 +98,11 @@ export default async function SubmitPage({ params }: { params: { id: string } })
       <div className="card">
         <span className="section-title">Checklist ก่อนส่งงาน</span>
         <ul className="mt-2 text-sm flex flex-col gap-2">
+          <ChecklistItem
+            ok={hasPhotos}
+            label={`รูปสินค้าครบ ${DOC_PHOTO_MAX} รูป (มี ${photoCount || 0}/${DOC_PHOTO_MAX})`}
+            note={hasPhotos ? undefined : "ถ่ายที่หน้า 1. ข้อมูลหลัก"}
+          />
           <ChecklistItem ok={hasPcs} label="ชั่ง Per Pcs" skipReason={doc.skip_per_pcs ? doc.skip_reason_per_pcs : null} />
           <ChecklistItem ok={hasInner} label="ชั่ง Per Inner/Tray/Bag" skipReason={doc.skip_per_inner ? doc.skip_reason_per_inner : null} />
           <ChecklistItem ok={hasCarton} label="ชั่ง Per Carton (Grid)" skipReason={doc.skip_per_carton ? doc.skip_reason_per_carton : null} />

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/Icon";
 import { PhotoViewer } from "@/components/PhotoViewer";
@@ -14,21 +15,27 @@ export function DocPhotos({
   userId,
   canManageAll = false,
   readOnly = false,
+  onCountChange,
 }: {
   documentId: string;
   userId: string;
   /** admin / admin_wh / manager / TEAMDATA may delete anyone's photo */
   canManageAll?: boolean;
   readOnly?: boolean;
+  /** called with the photo count after every load (header uses it to lock "ถัดไป") */
+  onCountChange?: (n: number) => void;
 }) {
   const supabase = createClient();
+  const router = useRouter();
   const [photos, setPhotos] = useState<DocPhoto[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [view, setView] = useState<number | null>(null);
 
   async function reload() {
-    setPhotos(await listDocPhotos(supabase as any, documentId));
+    const list = await listDocPhotos(supabase as any, documentId);
+    setPhotos(list);
+    onCountChange?.(list.length);
   }
   useEffect(() => {
     reload();
@@ -53,6 +60,7 @@ export function DocPhotos({
     await supabase.from("audit_log").insert({ document_id: documentId, actor: userId, action: "add_item_photo", detail: { count: Math.min(files.length, room) } });
     setBusy(false);
     reload();
+    router.refresh(); // step bar / submit lock depend on the photo count
   }
 
   async function makePrimary(p: DocPhoto) {
@@ -67,6 +75,7 @@ export function DocPhotos({
     else await supabase.from("audit_log").insert({ document_id: documentId, actor: userId, action: "delete_item_photo", detail: { url: p.url } });
     setView(null);
     reload();
+    router.refresh();
   }
 
   if (photos === null) return <div className="card h-28 animate-pulse bg-surface-container-low" aria-label="กำลังโหลดรูปสินค้า" />;
@@ -77,8 +86,10 @@ export function DocPhotos({
   return (
     <div className="card">
       <div className="flex items-center justify-between">
-        <span className="section-title">รูปสินค้าของใบงานนี้</span>
-        <span className="text-[11px] font-bold text-outline">
+        <span className="section-title">
+          รูปสินค้าของใบงานนี้ <span className="text-error normal-case">(บังคับ {DOC_PHOTO_MAX} รูป)</span>
+        </span>
+        <span className={`text-[11px] font-bold ${full ? "text-success" : "text-error"}`}>
           {photos.length}/{DOC_PHOTO_MAX}
           {full ? " · เต็ม" : ""}
         </span>
@@ -119,6 +130,11 @@ export function DocPhotos({
             ? "ครบ 4 รูปแล้ว — ลบรูปเดิมก่อนจึงเพิ่มใหม่ได้"
             : "รูปบันทึกไว้กับใบงานนี้ (ไม่ผูกกับรหัสสินค้า) · แตะรูปเพื่อดูใหญ่/ตั้งรูปหลัก"}
       </p>
+      {!readOnly && !full && (
+        <p className="text-[11px] text-error font-semibold mt-1">
+          ถ่ายอีก {DOC_PHOTO_MAX - photos.length} รูป จึงจะไปขั้นตอนถัดไปได้
+        </p>
+      )}
       {err && <p className="text-[11px] text-error mt-1">{err}</p>}
 
       {view !== null && photos[view] && (

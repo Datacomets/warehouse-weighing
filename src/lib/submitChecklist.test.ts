@@ -4,18 +4,20 @@ import { computeSubmitChecklist } from "./submitChecklist";
 describe("computeSubmitChecklist()", () => {
   it("returns all false for an empty document", () => {
     expect(
-      computeSubmitChecklist({ measurementKinds: [], gridCount: 0, remainderPcs: null })
+      computeSubmitChecklist({ measurementKinds: [], gridCount: 0, remainderPcs: null, photoCount: 0 })
     ).toEqual({
       hasPcs: false,
       hasInner: false,
       hasCarton: false,
       hasRemainder: false,
+      hasPhotos: false,
       hasAll: false,
     });
   });
 
   it("hasAll=true when all four steps are complete", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_inner", "per_carton"],
       gridCount: 5,
       remainderPcs: 0,
@@ -25,12 +27,14 @@ describe("computeSubmitChecklist()", () => {
       hasInner: true,
       hasCarton: true,
       hasRemainder: true,
+      hasPhotos: true,
       hasAll: true,
     });
   });
 
   it("remainderPcs=0 counts as recorded (not missing)", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_inner"],
       gridCount: 3,
       remainderPcs: 0,
@@ -41,6 +45,7 @@ describe("computeSubmitChecklist()", () => {
 
   it("remainderPcs=undefined is treated the same as null (not recorded)", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_inner"],
       gridCount: 3,
       remainderPcs: undefined,
@@ -51,6 +56,7 @@ describe("computeSubmitChecklist()", () => {
 
   it("hasAll=false when per_pcs is missing", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_inner", "per_carton"],
       gridCount: 5,
       remainderPcs: 0,
@@ -61,6 +67,7 @@ describe("computeSubmitChecklist()", () => {
 
   it("hasAll=false when per_inner is missing", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_carton"],
       gridCount: 5,
       remainderPcs: 0,
@@ -72,6 +79,7 @@ describe("computeSubmitChecklist()", () => {
   it("hasCarton is derived from gridCount, not from measurementKinds", () => {
     // gridCount is authoritative for per_carton — measurements.kind='per_carton' shouldn't matter
     const withKindNoGrid = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_inner", "per_carton"],
       gridCount: 0,
       remainderPcs: 0,
@@ -79,6 +87,7 @@ describe("computeSubmitChecklist()", () => {
     expect(withKindNoGrid.hasCarton).toBe(false);
 
     const withGridNoKind = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_inner"],
       gridCount: 1,
       remainderPcs: 0,
@@ -88,6 +97,7 @@ describe("computeSubmitChecklist()", () => {
 
   it("hasRemainder requires hasCarton: remainder recorded with no cartons is still false", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_inner"],
       gridCount: 0,
       remainderPcs: 5,
@@ -98,6 +108,7 @@ describe("computeSubmitChecklist()", () => {
 
   it("handles duplicate kinds (Set semantics)", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["per_pcs", "per_pcs", "per_inner", "per_inner"],
       gridCount: 2,
       remainderPcs: 10,
@@ -108,6 +119,7 @@ describe("computeSubmitChecklist()", () => {
 
   it("ignores unknown measurement kinds", () => {
     const result = computeSubmitChecklist({
+      photoCount: 4,
       measurementKinds: ["gibberish", "per_pcs", "per_inner"],
       gridCount: 1,
       remainderPcs: 0,
@@ -118,6 +130,7 @@ describe("computeSubmitChecklist()", () => {
   describe("skip flags", () => {
     it("skipPerPcs makes hasPcs true without measurements", () => {
       const result = computeSubmitChecklist({
+      photoCount: 4,
         measurementKinds: ["per_inner"],
         gridCount: 1,
         remainderPcs: 0,
@@ -129,6 +142,7 @@ describe("computeSubmitChecklist()", () => {
 
     it("skipPerInner makes hasInner true without measurements", () => {
       const result = computeSubmitChecklist({
+      photoCount: 4,
         measurementKinds: ["per_pcs"],
         gridCount: 1,
         remainderPcs: 0,
@@ -140,6 +154,7 @@ describe("computeSubmitChecklist()", () => {
 
     it("skipPerCarton makes hasCarton true and auto-satisfies hasRemainder", () => {
       const result = computeSubmitChecklist({
+      photoCount: 4,
         measurementKinds: ["per_pcs", "per_inner"],
         gridCount: 0,
         remainderPcs: null,
@@ -152,6 +167,7 @@ describe("computeSubmitChecklist()", () => {
 
     it("all three skipped + no data is valid to submit", () => {
       const result = computeSubmitChecklist({
+      photoCount: 4,
         measurementKinds: [],
         gridCount: 0,
         remainderPcs: null,
@@ -164,6 +180,7 @@ describe("computeSubmitChecklist()", () => {
 
     it("skip=false behaves like the original contract", () => {
       const result = computeSubmitChecklist({
+      photoCount: 4,
         measurementKinds: [],
         gridCount: 0,
         remainderPcs: null,
@@ -177,6 +194,7 @@ describe("computeSubmitChecklist()", () => {
     it("carton weighed + skipPerCarton=true is still valid (skip trumps counts)", () => {
       // shouldn't happen in practice but the contract stays deterministic
       const result = computeSubmitChecklist({
+      photoCount: 4,
         measurementKinds: ["per_pcs", "per_inner"],
         gridCount: 3,
         remainderPcs: null,
@@ -184,6 +202,22 @@ describe("computeSubmitChecklist()", () => {
       });
       expect(result.hasRemainder).toBe(true);
       expect(result.hasAll).toBe(true);
+    });
+  });
+
+  describe("product photos (บังคับ 4 รูป)", () => {
+    const done = { measurementKinds: ["per_pcs", "per_inner"], gridCount: 5, remainderPcs: 0 };
+    it("blocks submit with fewer than 4 photos", () => {
+      for (const n of [0, 1, 3]) {
+        const r = computeSubmitChecklist({ ...done, photoCount: n });
+        expect(r.hasPhotos).toBe(false);
+        expect(r.hasAll).toBe(false);
+      }
+    });
+    it("allows submit with 4 photos", () => {
+      const r = computeSubmitChecklist({ ...done, photoCount: 4 });
+      expect(r.hasPhotos).toBe(true);
+      expect(r.hasAll).toBe(true);
     });
   });
 });

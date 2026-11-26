@@ -20,9 +20,12 @@ const REQUIRED_STEPS = ["header", "per-pcs", "per-inner", "count", "remainder"];
 export function StepNav({
   docId,
   completed = {},
+  photosMissing = false,
 }: {
   docId: string;
   completed?: Record<string, boolean>;
+  /** product photos not complete yet → every step after ข้อมูลหลัก is locked */
+  photosMissing?: boolean;
 }) {
   const path = usePathname();
   const doneCount = REQUIRED_STEPS.filter((k) => completed[k]).length;
@@ -34,11 +37,14 @@ export function StepNav({
         const href = `/doc/${docId}/${s.key}`;
         const active = path === href || path.startsWith(href);
         const done = !!completed[s.key];
-        const locked = s.key === "submit" && !canSubmit && !done;
+        const photoLocked = photosMissing && s.key !== "header";
+        const locked = photoLocked || (s.key === "submit" && !canSubmit && !done);
         const className = clsx(
           "px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold border transition-colors flex items-center gap-1",
           active
             ? "bg-primary-container text-on-primary border-primary-container"
+            : photoLocked
+            ? "bg-surface-container-low text-on-surface-variant/50 border-outline-variant/20 cursor-not-allowed"
             : done
             ? "bg-success/10 text-success border-success/30"
             : locked
@@ -47,14 +53,14 @@ export function StepNav({
         );
         const content = (
           <>
-            {done && !active && (
+            {done && !active && !photoLocked && (
               <Icon name="check_circle" className="text-success text-sm" />
             )}
             {locked && (
               <Icon name="lock" className="text-on-surface-variant/50 text-sm" />
             )}
             {i + 1}. {s.label}
-            {locked && (
+            {locked && !photoLocked && (
               <span className="text-[10px] font-normal opacity-60">{doneCount}/{REQUIRED_STEPS.length}</span>
             )}
           </>
@@ -65,7 +71,7 @@ export function StepNav({
               key={s.key}
               role="link"
               aria-disabled="true"
-              title={`ทำครบ ${doneCount}/${REQUIRED_STEPS.length} ขั้นตอนก่อนจึงจะส่งงานได้`}
+              title={photoLocked ? "ถ่ายรูปสินค้าให้ครบ 4 รูปที่หน้า ข้อมูลหลัก ก่อน" : `ทำครบ ${doneCount}/${REQUIRED_STEPS.length} ขั้นตอนก่อนจึงจะส่งงานได้`}
               className={className}
             >
               {content}

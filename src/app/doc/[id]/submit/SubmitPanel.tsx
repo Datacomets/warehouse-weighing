@@ -123,7 +123,7 @@ export function SubmitPanel({
       )}
       {!canSubmit && (
         <p className="text-xs text-error">
-          ⚠ ต้องกรอก Per Pcs, Per Inner และ Per Carton อย่างน้อย 1 ค่าก่อนจึงจะส่งงานได้
+          ⚠ ทำ Checklist ด้านบนให้ครบก่อน (รูปสินค้าครบ 4 รูป, Per Pcs, Per Inner, Per Carton และนับเศษ) จึงจะส่งงานได้
         </p>
       )}
     </>

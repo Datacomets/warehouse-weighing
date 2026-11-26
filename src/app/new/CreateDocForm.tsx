@@ -7,12 +7,10 @@ import { Icon } from "@/components/Icon";
 import type { UserRole } from "@/lib/types";
 
 export function CreateDocForm({
-  whNumber,
   userId,
   role,
   initialCode = "",
 }: {
-  whNumber: string;
   userId: string;
   role: UserRole;
   /** from /new?code=… (product page → "สร้างใบงานใหม่ของรหัสนี้") */
@@ -82,45 +80,45 @@ export function CreateDocForm({
     e.preventDefault();
     setErr(null);
     setSaving(true);
-    const { data, error } = await supabase
-      .from("gr_documents")
-      .insert({
-        wh_number: whNumber,
-        status: "in_progress",
-        ...form,
-        delivery_date: form.delivery_date || null,
-        sap_inbound_id: form.sap_inbound_id || null,
-        sap_notification_id: form.sap_notification_id || null,
-        created_by: userId,
-      })
-      .select("id")
-      .single();
-    setSaving(false);
-    if (error || !data) {
+    // Issues the next WH number (latest saved + 1) and creates the document in one step.
+    const { data, error } = await supabase.rpc("create_gr_document", {
+      p_lot: form.lot,
+      p_po_number: form.po_number,
+      p_item_code: form.item_code,
+      p_description: form.description,
+      p_supplier: form.supplier,
+      p_delivery_date: form.delivery_date || null,
+      p_sap_inbound_id: form.sap_inbound_id || null,
+      p_sap_notification_id: form.sap_notification_id || null,
+      p_created_by: userId,
+    });
+    const created = data as { id: string; wh_number: string } | null;
+    if (error || !created?.id) {
+      setSaving(false);
       setErr(error?.message || "บันทึกไม่สำเร็จ");
       return;
     }
     await supabase.from("audit_log").insert({
-      document_id: data.id,
+      document_id: created.id,
       actor: userId,
       action: "create_doc",
-      detail: { wh_number: whNumber },
+      detail: { wh_number: created.wh_number },
     });
-    router.push(`/doc/${data.id}/header`);
+    router.push(`/doc/${created.id}/header`);
   }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="card border-l-4 border-primary-container">
-        <span className="section-title">เลขเอกสาร (Auto-Generated)</span>
+        <span className="section-title">เลขเอกสาร</span>
         <div className="flex items-center justify-between mt-1">
-          <h2 className="text-2xl font-headline font-extrabold text-primary">{whNumber}</h2>
-          <span className="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase">
-            ใหม่
+          <h2 className="text-xl font-headline font-extrabold text-on-surface-variant">ออกเลขเมื่อกดบันทึก</h2>
+          <span className="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold">
+            ยังไม่ออกเลข
           </span>
         </div>
         <p className="text-[11px] text-outline mt-1">
-          เลขนี้ถูกล็อกโดยระบบและไม่สามารถแก้ไขได้
+          ระบบจะให้เลขถัดจากใบล่าสุดตอนกดบันทึก · เปิดหน้านี้แล้วออกไป จะไม่เสียเลข
         </p>
       </div>
 
